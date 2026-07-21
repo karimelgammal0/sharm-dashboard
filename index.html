@@ -4,15 +4,37 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Sharm El-Sheikh – Project Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.39.3/umd/supabase.min.js" onerror="loadSupabaseFallback()"></script>
 <script>
-function loadSupabaseFallback() {
-  var s = document.createElement('script');
-  s.src = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';
-  s.onload = function() { console.log('Supabase loaded from unpkg fallback'); };
-  s.onerror = function() { console.error('All Supabase CDNs failed'); };
-  document.head.appendChild(s);
-}
+// Load Supabase JS with guaranteed initSync on load
+(function() {
+  function tryLoad(urls, idx) {
+    if(idx >= urls.length) {
+      console.error('All Supabase CDNs failed');
+      return;
+    }
+    var s = document.createElement('script');
+    s.src = urls[idx];
+    s.onload = function() {
+      console.log('Supabase loaded from: ' + urls[idx]);
+      // Wait for page scripts to finish then init
+      if(typeof initSync === 'function') {
+        initSync();
+      } else {
+        window.addEventListener('load', initSync);
+      }
+    };
+    s.onerror = function() {
+      console.warn('Failed: ' + urls[idx] + ' - trying next');
+      tryLoad(urls, idx + 1);
+    };
+    document.head.appendChild(s);
+  }
+  tryLoad([
+    'https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.39.3/umd/supabase.min.js',
+    'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js'
+  ], 0);
+})();
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1522,16 +1544,7 @@ function changeUser() {
   }
 }
 
-// Auto-start after all functions are defined
-window.addEventListener('DOMContentLoaded', function() {
-  // small delay to ensure supabase library is loaded
-  setTimeout(initSync, 300);
-});
-
-// Fallback: if DOMContentLoaded already fired, run now
-if(document.readyState !== 'loading') {
-  setTimeout(initSync, 500);
-}
+// initSync called from supabase script onload (see CDN tag)
 </script>
 </body>
 </html>
