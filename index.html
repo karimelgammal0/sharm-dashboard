@@ -4,6 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Sharm El-Sheikh – Project Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--navy:#1F3864;--gold:#C9A84C;--blue:#185EA5;--bg:#F4F6F9;--s0:#fff;--s1:#F8F9FA;--bd:#E0E0E0;--text:#1A1A1A;--muted:#6C757D}
@@ -1316,153 +1317,175 @@ function renderCharts(){
 initFilters();renderBOQ();renderOverview();renderCosts();loadCVars();initSync();
 
 // ═══════════════════════════════════════════════════════════
-// SUPABASE SHARED DATABASE SYNC
+// SUPABASE SHARED DATABASE SYNC — using official JS client
 // ═══════════════════════════════════════════════════════════
-var SB_URL = "https://cstbpqkfhyxwprkyxxm.supabase.co";
-var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzdGJwcWtxZmh5eHdwcmt5eHhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2MzAwOTMsImV4cCI6MjEwMDIwNjA5M30.xUeLb99vhud0m8z7uLnBVSRYUKlWRjWrUSSTkRNs1iM";
+var SB_URL   = "https://cstbpqkfhyxwprkyxxm.supabase.co";
+var SB_KEY   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzdGJwcWtxZmh5eHdwcmt5eHhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2MzAwOTMsImV4cCI6MjEwMDIwNjA5M30.xUeLb99vhud0m8z7uLnBVSRYUKlWRjWrUSSTkRNs1iM";
 var SB_TABLE = "boq_entries";
-var syncStatus = "idle"; // idle | syncing | ok | error
+var supabaseClient = null;
+var syncStatus   = "idle";
 var syncInterval = null;
-var currentUser = "";
+var currentUser  = "";
 
-// ── DB helpers ────────────────────────────────────────────
-function sbFetch(method, path, body) {
-  var headers = {
-    "apikey": SB_KEY,
-    "Authorization": "Bearer " + SB_KEY,
-    "Content-Type": "application/json"
-  };
-  if(method === "POST") headers["Prefer"] = "resolution=merge-duplicates,return=minimal";
-  return fetch(SB_URL + "/rest/v1/" + path, {
-    method: method,
-    headers: headers,
-    body: body ? JSON.stringify(body) : undefined
-  });
+function initSupabase() {
+  try {
+    supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+    return true;
+  } catch(e) {
+    console.error("Supabase init error:", e);
+    setSyncStatus("error", "Init failed: " + e.message);
+    return false;
+  }
 }
 
-// ── Status indicator ──────────────────────────────────────
 function setSyncStatus(status, msg) {
   syncStatus = status;
   var el = document.getElementById("sync-status");
   if(!el) return;
-  var icons = {idle:"⚪", syncing:"🔄", ok:"🟢", error:"🔴"};
-  var colors = {idle:"#888", syncing:"#B7770D", ok:"#1E6F50", error:"#C0392B"};
-  el.textContent = (icons[status]||"⚪") + " " + (msg||status);
-  el.style.color = colors[status]||"#888";
+  var icons  = {idle:"⚪", syncing:"🔄", ok:"🟢", error:"🔴"};
+  var colors = {idle:"#888", syncing:"#FFA500", ok:"#90EE90", error:"#FF6B6B"};
+  el.textContent = (icons[status]||"⚪") + " " + (msg || status);
+  el.style.color  = colors[status] || "#888";
 }
 
-// ── Pull from Supabase → update exData ───────────────────
-function pullFromDB() {
+async function pullFromDB() {
+  if(!supabaseClient) return;
   setSyncStatus("syncing", "Syncing...");
-  return sbFetch("GET", SB_TABLE + "?select=item_code,prev_qty,curr_qty,prev_pct,curr_pct,updated_by&order=item_code")
-    .then(function(r) {
-      if(!r.ok) { return r.text().then(function(t){ setSyncStatus("error","HTTP "+r.status+": "+t.substring(0,60)); throw new Error(t); }); }
-      return r.json();
-    })
-    .then(function(rows) {
-      if(!Array.isArray(rows)) { setSyncStatus("error","Bad response: "+JSON.stringify(rows).substring(0,60)); return; }
-      var changed = false;
-      rows.forEach(function(row) {
-        var item = exData.find(function(d){ return d.code === row.item_code; });
-        if(item) {
-          if(item.prev_qty !== (row.prev_qty||0) ||
-             item.curr_qty !== (row.curr_qty||0) ||
-             item.prev_pct !== (row.prev_pct||0) ||
-             item.curr_pct !== (row.curr_pct||0)) {
-            item.prev_qty = row.prev_qty||0;
-            item.curr_qty = row.curr_qty||0;
-            item.prev_pct = row.prev_pct||0;
-            item.curr_pct = row.curr_pct||0;
-            changed = true;
-          }
+  try {
+    var result = await supabaseClient
+      .from(SB_TABLE)
+      .select("item_code,prev_qty,curr_qty,prev_pct,curr_pct,updated_by")
+      .order("item_code");
+
+    if(result.error) {
+      setSyncStatus("error", result.error.message);
+      console.error("Pull error:", result.error);
+      return;
+    }
+
+    var rows = result.data || [];
+    var changed = false;
+    rows.forEach(function(row) {
+      var item = exData.find(function(d) { return d.code === row.item_code; });
+      if(item) {
+        if(item.curr_qty !== (row.curr_qty||0) || item.curr_pct !== (row.curr_pct||0) ||
+           item.prev_qty !== (row.prev_qty||0) || item.prev_pct !== (row.prev_pct||0)) {
+          item.prev_qty = row.prev_qty || 0;
+          item.curr_qty = row.curr_qty || 0;
+          item.prev_pct = row.prev_pct || 0;
+          item.curr_pct = row.curr_pct || 0;
+          changed = true;
         }
-      });
-      if(changed) {
-        saveStorage(); // keep localStorage in sync too
-        var activePaneId = document.querySelector(".pane.active") ? document.querySelector(".pane.active").id : "";
-        if(activePaneId === "pane-extract") renderExtract();
-        if(activePaneId === "pane-overview") renderOverview();
       }
-      setSyncStatus("ok", "Synced " + new Date().toLocaleTimeString());
-    })
-    .catch(function(e) {
-      console.error("Supabase error:", e);
-      setSyncStatus("error","Offline: " + (e.message||e));
     });
+
+    if(changed) {
+      saveStorage();
+      var active = document.querySelector(".pane.active");
+      if(active && active.id === "pane-extract") renderExtract();
+      if(active && active.id === "pane-overview") renderOverview();
+    }
+    setSyncStatus("ok", "Synced " + new Date().toLocaleTimeString());
+  } catch(e) {
+    setSyncStatus("error", "Error: " + e.message);
+    console.error("Pull exception:", e);
+  }
 }
 
-// ── Push one item to Supabase ─────────────────────────────
-function pushToDB(item) {
-  if(!item) return Promise.resolve();
-  setSyncStatus("syncing","Saving...");
-  var payload = {
-    item_code:  item.code,
-    prev_qty:   item.prev_qty||0,
-    curr_qty:   item.curr_qty||0,
-    prev_pct:   item.prev_pct||0,
-    curr_pct:   item.curr_pct||0,
-    updated_at: new Date().toISOString(),
-    updated_by: currentUser || "anonymous"
-  };
-  return sbFetch("POST", SB_TABLE, payload)
-    .then(function(r) {
-      if(r.ok) { setSyncStatus("ok","Saved ✓"); }
-      else { r.text().then(function(t){ setSyncStatus("error","Save failed: "+t.substring(0,50)); console.error("Push error:",t); }); }
-    })
-    .catch(function() { setSyncStatus("error","Offline"); });
+async function pushToDB(item) {
+  if(!supabaseClient || !item) return;
+  setSyncStatus("syncing", "Saving...");
+  try {
+    var result = await supabaseClient
+      .from(SB_TABLE)
+      .upsert({
+        item_code:  item.code,
+        prev_qty:   item.prev_qty  || 0,
+        curr_qty:   item.curr_qty  || 0,
+        prev_pct:   item.prev_pct  || 0,
+        curr_pct:   item.curr_pct  || 0,
+        updated_at: new Date().toISOString(),
+        updated_by: currentUser || "anonymous"
+      }, { onConflict: "item_code" });
+
+    if(result.error) {
+      setSyncStatus("error", "Save failed: " + result.error.message);
+      console.error("Push error:", result.error);
+    } else {
+      setSyncStatus("ok", "Saved ✓ " + new Date().toLocaleTimeString());
+    }
+  } catch(e) {
+    setSyncStatus("error", "Error: " + e.message);
+    console.error("Push exception:", e);
+  }
 }
 
-// ── Push ALL exData to Supabase (bulk) ────────────────────
-function pushAllToDB() {
-  var activeItems = exData.filter(function(d){
-    return (d.curr_qty||0)>0||(d.curr_pct||0)>0||(d.prev_qty||0)>0||(d.prev_pct||0)>0;
+async function pushAllToDB() {
+  if(!supabaseClient) return;
+  var activeItems = exData.filter(function(d) {
+    return (d.curr_qty||0)>0 || (d.curr_pct||0)>0 || (d.prev_qty||0)>0 || (d.prev_pct||0)>0;
   });
-  if(activeItems.length === 0) { setSyncStatus("ok","Nothing to push"); return; }
-  setSyncStatus("syncing","Pushing " + activeItems.length + " items...");
-  var payload = activeItems.map(function(d){
-    return {
-      item_code:  d.code,
-      prev_qty:   d.prev_qty||0,
-      curr_qty:   d.curr_qty||0,
-      prev_pct:   d.prev_pct||0,
-      curr_pct:   d.curr_pct||0,
-      updated_at: new Date().toISOString(),
-      updated_by: currentUser||"anonymous"
-    };
-  });
-  sbFetch("POST", SB_TABLE, payload)
-    .then(function(r){
-      if(r.ok) setSyncStatus("ok","Pushed " + activeItems.length + " items");
-      else setSyncStatus("error","Push failed");
-    })
-    .catch(function(){ setSyncStatus("error","Offline"); });
+  if(activeItems.length === 0) { setSyncStatus("ok", "Nothing to push"); return; }
+  setSyncStatus("syncing", "Pushing " + activeItems.length + " items...");
+  try {
+    var payload = activeItems.map(function(d) {
+      return {
+        item_code:  d.code,
+        prev_qty:   d.prev_qty  || 0,
+        curr_qty:   d.curr_qty  || 0,
+        prev_pct:   d.prev_pct  || 0,
+        curr_pct:   d.curr_pct  || 0,
+        updated_at: new Date().toISOString(),
+        updated_by: currentUser || "anonymous"
+      };
+    });
+    var result = await supabaseClient
+      .from(SB_TABLE)
+      .upsert(payload, { onConflict: "item_code" });
+
+    if(result.error) {
+      setSyncStatus("error", "Push failed: " + result.error.message);
+    } else {
+      setSyncStatus("ok", "Pushed " + activeItems.length + " items ✓");
+    }
+  } catch(e) {
+    setSyncStatus("error", "Error: " + e.message);
+  }
 }
 
-// ── Auto-sync every 30 seconds ───────────────────────────
+async function testConnection() {
+  if(!supabaseClient) { setSyncStatus("error","Client not init"); return; }
+  setSyncStatus("syncing", "Testing...");
+  try {
+    var result = await supabaseClient.from(SB_TABLE).select("item_code").limit(1);
+    if(result.error) {
+      setSyncStatus("error", "DB error: " + result.error.message);
+    } else {
+      setSyncStatus("ok", "Connected! ✓ (" + (result.data||[]).length + " rows found)");
+    }
+  } catch(e) {
+    setSyncStatus("error", "Fetch error: " + e.message);
+  }
+}
+
 function startAutoSync() {
   if(syncInterval) clearInterval(syncInterval);
-  pullFromDB(); // immediate first pull
+  pullFromDB();
   syncInterval = setInterval(pullFromDB, 30000);
 }
 
-// ── Init: ask for user name then start sync ───────────────
 function initSync() {
+  if(!initSupabase()) return;
   var saved = localStorage.getItem("boq_username");
   if(saved) {
     currentUser = saved;
-    showSyncBar();
-    startAutoSync();
   } else {
-    var name = prompt("أدخل اسمك للمزامنة مع الفريق:\nEnter your name for team sync:");
-    if(name && name.trim()) {
-      currentUser = name.trim();
-      localStorage.setItem("boq_username", currentUser);
-    } else {
-      currentUser = "user_" + Math.random().toString(36).substr(2,5);
-    }
-    showSyncBar();
-    startAutoSync();
+    var name = prompt("Enter your name for team sync:\nأدخل اسمك للمزامنة مع الفريق:");
+    currentUser = (name && name.trim()) ? name.trim() : "user_" + Math.random().toString(36).substr(2,5);
+    localStorage.setItem("boq_username", currentUser);
   }
+  showSyncBar();
+  startAutoSync();
 }
 
 function showSyncBar() {
@@ -1472,31 +1495,6 @@ function showSyncBar() {
     var un = document.getElementById("sync-username");
     if(un) un.textContent = currentUser;
   }
-}
-
-function testConnection() {
-  var testUrl = SB_URL + "/rest/v1/" + SB_TABLE + "?select=item_code&limit=1";
-  setSyncStatus("syncing", "Testing...");
-  console.log("Testing URL:", testUrl);
-  fetch(testUrl, {
-    method: "GET",
-    headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY }
-  })
-  .then(function(r) {
-    console.log("Response status:", r.status, r.statusText);
-    return r.text().then(function(t) {
-      console.log("Response body:", t.substring(0, 200));
-      if(r.ok) {
-        setSyncStatus("ok", "Connected! Status: " + r.status);
-      } else {
-        setSyncStatus("error", "HTTP " + r.status + ": " + t.substring(0, 80));
-      }
-    });
-  })
-  .catch(function(e) {
-    console.error("Fetch error:", e);
-    setSyncStatus("error", "Fetch failed: " + e.message);
-  });
 }
 
 function changeUser() {
