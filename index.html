@@ -1314,7 +1314,7 @@ function renderCharts(){
 }
 
 // INIT
-initFilters();renderBOQ();renderOverview();renderCosts();loadCVars();initSync();
+initFilters();renderBOQ();renderOverview();renderCosts();loadCVars();
 
 // ═══════════════════════════════════════════════════════════
 // SUPABASE SHARED DATABASE SYNC — using official JS client
@@ -1507,6 +1507,16 @@ function changeUser() {
   }
 }
 
+// Auto-start after all functions are defined
+window.addEventListener('DOMContentLoaded', function() {
+  // small delay to ensure supabase library is loaded
+  setTimeout(initSync, 300);
+});
+
+// Fallback: if DOMContentLoaded already fired, run now
+if(document.readyState !== 'loading') {
+  setTimeout(initSync, 500);
+}
 </script>
 </body>
 </html>
