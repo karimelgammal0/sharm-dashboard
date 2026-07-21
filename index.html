@@ -144,6 +144,7 @@ td.input-cell input:focus{border-color:var(--blue);background:#EEF5FF}
   <div style="display:flex;gap:8px">
     <button onclick="pullFromDB()" style="font-size:10px;padding:3px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;cursor:pointer">🔄 Sync Now</button>
     <button onclick="pushAllToDB()" style="font-size:10px;padding:3px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;cursor:pointer">⬆ Push All</button>
+    <button onclick="testConnection()" style="font-size:10px;padding:3px 10px;border-radius:4px;border:1px solid rgba(255,165,0,.5);background:rgba(255,165,0,.15);color:#FFA500;cursor:pointer">🔧 Test DB</button>
     <button onclick="changeUser()" style="font-size:10px;padding:3px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;cursor:pointer">✏ Change User</button>
   </div>
 </div>
@@ -1326,14 +1327,15 @@ var currentUser = "";
 
 // ── DB helpers ────────────────────────────────────────────
 function sbFetch(method, path, body) {
+  var headers = {
+    "apikey": SB_KEY,
+    "Authorization": "Bearer " + SB_KEY,
+    "Content-Type": "application/json"
+  };
+  if(method === "POST") headers["Prefer"] = "resolution=merge-duplicates,return=minimal";
   return fetch(SB_URL + "/rest/v1/" + path, {
     method: method,
-    headers: {
-      "apikey": SB_KEY,
-      "Authorization": "Bearer " + SB_KEY,
-      "Content-Type": "application/json",
-      "Prefer": method === "POST" ? "resolution=merge-duplicates,return=minimal" : "return=minimal"
-    },
+    headers: headers,
     body: body ? JSON.stringify(body) : undefined
   });
 }
@@ -1353,9 +1355,12 @@ function setSyncStatus(status, msg) {
 function pullFromDB() {
   setSyncStatus("syncing", "Syncing...");
   return sbFetch("GET", SB_TABLE + "?select=item_code,prev_qty,curr_qty,prev_pct,curr_pct,updated_by&order=item_code")
-    .then(function(r) { return r.json(); })
+    .then(function(r) {
+      if(!r.ok) { return r.text().then(function(t){ setSyncStatus("error","HTTP "+r.status+": "+t.substring(0,60)); throw new Error(t); }); }
+      return r.json();
+    })
     .then(function(rows) {
-      if(!Array.isArray(rows)) { setSyncStatus("error","DB error"); return; }
+      if(!Array.isArray(rows)) { setSyncStatus("error","Bad response: "+JSON.stringify(rows).substring(0,60)); return; }
       var changed = false;
       rows.forEach(function(row) {
         var item = exData.find(function(d){ return d.code === row.item_code; });
@@ -1380,7 +1385,10 @@ function pullFromDB() {
       }
       setSyncStatus("ok", "Synced " + new Date().toLocaleTimeString());
     })
-    .catch(function(e) { setSyncStatus("error","Offline"); });
+    .catch(function(e) {
+      console.error("Supabase error:", e);
+      setSyncStatus("error","Offline: " + (e.message||e));
+    });
 }
 
 // ── Push one item to Supabase ─────────────────────────────
@@ -1399,7 +1407,7 @@ function pushToDB(item) {
   return sbFetch("POST", SB_TABLE, payload)
     .then(function(r) {
       if(r.ok) { setSyncStatus("ok","Saved ✓"); }
-      else { r.text().then(function(t){ setSyncStatus("error","Save failed"); console.error(t); }); }
+      else { r.text().then(function(t){ setSyncStatus("error","Save failed: "+t.substring(0,50)); console.error("Push error:",t); }); }
     })
     .catch(function() { setSyncStatus("error","Offline"); });
 }
@@ -1464,6 +1472,31 @@ function showSyncBar() {
     var un = document.getElementById("sync-username");
     if(un) un.textContent = currentUser;
   }
+}
+
+function testConnection() {
+  var testUrl = SB_URL + "/rest/v1/" + SB_TABLE + "?select=item_code&limit=1";
+  setSyncStatus("syncing", "Testing...");
+  console.log("Testing URL:", testUrl);
+  fetch(testUrl, {
+    method: "GET",
+    headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY }
+  })
+  .then(function(r) {
+    console.log("Response status:", r.status, r.statusText);
+    return r.text().then(function(t) {
+      console.log("Response body:", t.substring(0, 200));
+      if(r.ok) {
+        setSyncStatus("ok", "Connected! Status: " + r.status);
+      } else {
+        setSyncStatus("error", "HTTP " + r.status + ": " + t.substring(0, 80));
+      }
+    });
+  })
+  .catch(function(e) {
+    console.error("Fetch error:", e);
+    setSyncStatus("error", "Fetch failed: " + e.message);
+  });
 }
 
 function changeUser() {
