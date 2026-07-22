@@ -112,16 +112,17 @@ td.input-cell input:focus{border-color:var(--blue);background:#EEF5FF}
 
 <style id="print-styles">
 @media print {
+  /* Hide everything except the certificate */
   header, .tabs, #pane-overview, #pane-boq, #pane-costs, #pane-charts,
   .filters, .info-box, #expane-detail, .ex-stab, .btn,
   .hdr-right, #lang-btn, .costs-summary,
-  [id^="tab-"], .ex-stab,
-  div.filters, div.info-box { display:none !important; }
+  [id^="tab-"], div.filters, div.info-box,
+  #sync-bar { display:none !important; }
 
   #pane-extract { display:block !important; padding:0 !important; }
   #expane-summary { display:block !important; }
 
-  /* Contract vars panel - hide on print */
+  /* Hide contract vars panel */
   #pane-extract > div:first-child,
   #pane-extract > div:nth-child(2) { display:none !important; }
 
@@ -133,9 +134,20 @@ td.input-cell input:focus{border-color:var(--blue);background:#EEF5FF}
     margin:0 !important;
   }
 
-  /* Force colors to print */
+  /* Force colors */
   * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
-  @page { margin:1.2cm; size:A4 portrait; }
+
+  /* Remove browser date/time header and URL footer */
+  @page {
+    size:A4 portrait;
+    margin:1.2cm;
+    @top-left   { content:none; }
+    @top-center { content:none; }
+    @top-right  { content:none; }
+    @bottom-left   { content:none; }
+    @bottom-center { content:none; }
+    @bottom-right  { content:none; }
+  }
 }
 </style>
 </head>
