@@ -117,7 +117,7 @@ td.input-cell input:focus{border-color:var(--blue);background:#EEF5FF}
   .filters, .info-box, #expane-detail, .ex-stab, .btn,
   .hdr-right, #lang-btn, .costs-summary,
   [id^="tab-"], div.filters, div.info-box,
-  #sync-bar { display:none !important; }
+  #sync-bar, .no-print { display:none !important; }
 
   #pane-extract { display:block !important; padding:0 !important; }
   #expane-summary { display:block !important; }
@@ -129,10 +129,16 @@ td.input-cell input:focus{border-color:var(--blue);background:#EEF5FF}
   #print-area {
     border:none !important;
     box-shadow:none !important;
-    padding:16px !important;
+    padding:10px !important;
     max-width:100% !important;
     margin:0 !important;
+    font-size:11px !important;
   }
+
+  /* Shrink font sizes to fit one page */
+  #print-area h2, #print-area .banner-main { font-size:18px !important; }
+  #print-area table { font-size:10px !important; }
+  #print-area td, #print-area th { padding:4px 8px !important; }
 
   /* Force colors */
   * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
@@ -140,7 +146,7 @@ td.input-cell input:focus{border-color:var(--blue);background:#EEF5FF}
   /* Remove browser date/time header and URL footer */
   @page {
     size:A4 portrait;
-    margin:1.2cm;
+    margin:0.8cm;
     @top-left   { content:none; }
     @top-center { content:none; }
     @top-right  { content:none; }
@@ -354,7 +360,7 @@ td.input-cell input:focus{border-color:var(--blue);background:#EEF5FF}
 
   <!-- ── SUB-PANE: CERTIFICATE SUMMARY ── -->
   <div id="expane-summary" style="display:none">
-    <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
       <button class="btn btn-primary" onclick="printCertificate()" style="gap:5px">&#x1F5A8; Print Certificate</button>
       <span style="font-size:11px;color:var(--muted)">Preview of the payment certificate</span>
     </div>
