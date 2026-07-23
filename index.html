@@ -122,8 +122,11 @@ td.input-cell input:focus{border-color:var(--blue);background:#EEF5FF}
   #pane-extract { display:block !important; padding:0 !important; }
   #expane-summary { display:block !important; }
 
-  /* Hide contract vars panel only */
-  #pane-extract > div:first-child { display:none !important; }
+  /* Hide sub-tabs and contract vars panel only */
+  #pane-extract > div:first-child,
+  #pane-extract > div:nth-child(2) { display:none !important; }
+  /* Ensure summary is visible */
+  #expane-summary { display:block !important; }
 
   #print-area {
     border:none !important;
@@ -1593,5 +1596,3 @@ function changeUser() {
 // initSync called via window.onload
 window.onload = function() { initSync(); };
 </script>
-</body>
-</html>
