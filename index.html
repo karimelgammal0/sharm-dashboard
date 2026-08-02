@@ -94,6 +94,9 @@ td.input-cell input:focus{border-color:var(--blue);background:#EEF5FF}
 .td-qp{background:#EAF4FF}.td-qc{background:#EEF8FF}.td-qt{background:#DCF0FF;font-weight:700}
 .td-pp{background:#EAF7F0}.td-pc{background:#EEF9F4}.td-pt{background:#D5F5E9;font-weight:700}
 .td-w{background:#FEF9E7;color:#7D6608;font-weight:700}
+.th-works-usd{background:#FDF2E9!important;color:#935116!important}
+.td-wu{background:#FDF2E9;color:#935116;font-weight:700}
+tr.cc-total-top td{background:#F2F5F9;font-weight:700;color:#1F3864;border-bottom:2px solid #1F3864;font-size:12px}
 .upd-row td{background:#F0FBF6}
 .total-row td{font-weight:700;background:#EEF4FF;color:var(--navy)}
 .costs-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px}
@@ -556,7 +559,20 @@ td.input-cell input:focus{border-color:var(--blue);background:#EEF5FF}
       </div>
       <div class="tbl-wrap">
         <table>
-          <thead><tr>
+          <thead>
+          <tr class="cc-total-top">
+            <td colspan="5" style="padding:9px 10px;text-align:right">&#x627;&#x644;&#x625;&#x62C;&#x645;&#x627;&#x644;&#x64A; &#x627;&#x644;&#x643;&#x644;&#x64A;</td>
+            <td class="num" id="cc-h-boq"></td>
+            <td></td>
+            <td class="num" id="cc-h-extusd"></td>
+            <td class="num" id="cc-h-ext"></td>
+            <td></td>
+            <td></td>
+            <td class="num" id="cc-h-est"></td>
+            <td class="num" id="cc-h-act"></td>
+            <td class="num" id="cc-h-var"></td>
+          </tr>
+          <tr>
             <th style="text-align:right;min-width:110px">&#x627;&#x644;&#x642;&#x633;&#x645;</th>
             <th style="text-align:right;min-width:220px">&#x627;&#x644;&#x648;&#x635;&#x641;</th>
             <th style="text-align:center">&#x627;&#x644;&#x641;&#x626;&#x629;</th>
@@ -564,6 +580,7 @@ td.input-cell input:focus{border-color:var(--blue);background:#EEF5FF}
             <th class="num">&#x633;&#x639;&#x631; &#x627;&#x644;&#x648;&#x62D;&#x62F;&#x629; (&#x62C;.&#x645;)</th>
             <th class="num">&#x627;&#x644;&#x625;&#x62C;&#x645;&#x627;&#x644;&#x64A; (&#x62C;.&#x645;)</th>
             <th class="num th-qty">&#x625;&#x62C;&#x645;&#x627;&#x644;&#x64A; &#x643;&#x645;&#x64A;&#x629; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;</th>
+            <th class="num th-works-usd">&#x625;&#x62C;&#x645;&#x627;&#x644;&#x64A; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; ($)</th>
             <th class="num th-works">&#x625;&#x62C;&#x645;&#x627;&#x644;&#x64A; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; (&#x62C;.&#x645;)</th>
             <th class="num th-pct">&#x646;&#x633;&#x628;&#x629; &#x62A;&#x646;&#x641;&#x64A;&#x630; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;</th>
             <th class="num" style="min-width:95px">&#x646;&#x633;&#x628;&#x629; &#x627;&#x644;&#x62A;&#x643;&#x644;&#x641;&#x629; %</th>
@@ -577,6 +594,7 @@ td.input-cell input:focus{border-color:var(--blue);background:#EEF5FF}
               <td colspan="5" style="padding:9px 10px;text-align:right">&#x627;&#x644;&#x625;&#x62C;&#x645;&#x627;&#x644;&#x64A; &#x627;&#x644;&#x643;&#x644;&#x64A;</td>
               <td class="num" id="cc-t-boq"></td>
               <td></td>
+              <td class="num" id="cc-t-extusd"></td>
               <td class="num" id="cc-t-ext"></td>
               <td></td>
               <td></td>
@@ -1607,13 +1625,14 @@ function ccRows(){
     var r=map[id];
     var tq=r?r.tq:0, tp=r?r.tp:0;
     var ext=d.unit_egp*tq*(tp/100);
+    var extUsd=(d.unit_usd||0)*tq*(tp/100);
     if(sec&&d.section!==sec)return;
     if(cat&&d.cat!==cat)return;
     if(q&&d.desc.indexOf(q)<0&&d.section.indexOf(q)<0)return;
     if(only&&!(tq>0||tp>0))return;
     var v=ccGet(i);
     var est=(v.p/100)*ext;
-    out.push({i:i,d:d,tq:tq,tp:tp,ext:ext,p:v.p,a:v.a,est:est,vr:est-v.a});
+    out.push({i:i,d:d,tq:tq,tp:tp,ext:ext,extUsd:extUsd,p:v.p,a:v.a,est:est,vr:est-v.a});
   });
   return out;
 }
@@ -1632,9 +1651,9 @@ function renderCostControl(keepFocus){
   }
   var rows=ccRows();
   setText("cc-count",rows.length+" \u0628\u0646\u062f");
-  var tBoq=0,tExt=0,tEst=0,tAct=0;
+  var tBoq=0,tExt=0,tExtUsd=0,tEst=0,tAct=0;
   var html=rows.map(function(r){
-    tBoq+=r.d.total_egp;tExt+=r.ext;tEst+=r.est;tAct+=r.a;
+    tBoq+=r.d.total_egp;tExt+=r.ext;tExtUsd+=r.extUsd;tEst+=r.est;tAct+=r.a;
     var badge=COST_BADGE[r.d.cat]||"b-other";
     var vcl=r.vr<0?"#C0392B":(r.vr>0?"#1E6F50":"var(--muted)");
     var h='<tr class="r-item'+((r.tq>0||r.tp>0)?" upd-row":"")+'">';
@@ -1645,6 +1664,7 @@ function renderCostControl(keepFocus){
     h+='<td class="num" style="font-size:11px">'+(r.d.unit_egp>0?r.d.unit_egp.toLocaleString("en-US",{maximumFractionDigits:2}):"\u2014")+'</td>';
     h+='<td class="num">'+(r.d.total_egp>0?fmtEGP(r.d.total_egp):"\u2014")+'</td>';
     h+='<td class="num td-qt">'+(r.tq>0?r.tq.toLocaleString("en-US"):"\u2014")+'</td>';
+    h+='<td class="num td-wu">'+(r.extUsd>0?fmtUSD(r.extUsd):"\u2014")+'</td>';
     h+='<td class="num td-w">'+(r.ext>0?fmtEGP(r.ext):"\u2014")+'</td>';
     h+='<td class="num td-pt">'+(r.tp>0?r.tp.toFixed(1)+"%":"\u2014")+'</td>';
     h+='<td class="input-cell"><input type="number" min="0" step="0.1" placeholder="0" id="cc-p-'+r.i+'" onchange="ccSet('+r.i+',\'p\',this.value)"></td>';
@@ -1660,12 +1680,16 @@ function renderCostControl(keepFocus){
     if(pe&&r.p)pe.value=r.p;
     if(ae&&r.a)ae.value=r.a;
   });
-  setText("cc-t-boq",fmtEGP(tBoq));
-  setText("cc-t-ext",fmtEGP(tExt));
-  setText("cc-t-est",fmtEGP(tEst));
-  setText("cc-t-act",fmtEGP(tAct));
   var tv=tEst-tAct;
-  setText("cc-t-var",(tv<0?"-":"")+fmtEGP(Math.abs(tv)));
+  var tvStr=(tv<0?"-":"")+fmtEGP(Math.abs(tv));
+  ["cc-t-","cc-h-"].forEach(function(pfx){
+    setText(pfx+"boq",fmtEGP(tBoq));
+    setText(pfx+"extusd",fmtUSD(tExtUsd));
+    setText(pfx+"ext",fmtEGP(tExt));
+    setText(pfx+"est",fmtEGP(tEst));
+    setText(pfx+"act",fmtEGP(tAct));
+    setText(pfx+"var",tvStr);
+  });
   var kp=g("cc-kpis");
   if(kp){
     kp.innerHTML=[
@@ -1684,25 +1708,25 @@ function exportCostControl(){
   var L=lastIssued();
   var head=["\u0627\u0644\u0642\u0633\u0645","\u0627\u0644\u0648\u0635\u0641","\u0627\u0644\u0641\u0626\u0629","\u0627\u0644\u0648\u062d\u062f\u0629",
             "\u0633\u0639\u0631 \u0627\u0644\u0648\u062d\u062f\u0629 (\u062c.\u0645)","\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a (\u062c.\u0645)",
-            "\u0625\u062c\u0645\u0627\u0644\u064a \u0643\u0645\u064a\u0629 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635","\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 (\u062c.\u0645)",
+            "\u0625\u062c\u0645\u0627\u0644\u064a \u0643\u0645\u064a\u0629 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635","\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 ($)","\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 (\u062c.\u0645)",
             "\u0646\u0633\u0628\u0629 \u062a\u0646\u0641\u064a\u0630 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 %","\u0646\u0633\u0628\u0629 \u0627\u0644\u062a\u0643\u0644\u0641\u0629 %",
             "\u0627\u0644\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u0645\u0642\u062f\u0631\u0629 (\u062c.\u0645)","\u0627\u0644\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u062d\u0627\u0644\u064a\u0629 (\u062c.\u0645)",
             "\u0627\u0644\u0641\u0631\u0642 (\u062c.\u0645)"];
   function td(v,n){return '<td'+(n?' style="mso-number-format:0\\.00"':'')+'>'+v+'</td>';}
   var h='<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head>'+
-        '<body><table border="1" dir="rtl"><tr><td colspan="13" style="font-weight:bold">Cost Control'+
+        '<body><table border="1" dir="rtl"><tr><td colspan="14" style="font-weight:bold">Cost Control'+
         (L?(" \u2014 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+L.no+" \u0628\u062a\u0627\u0631\u064a\u062e "+L.date):"")+'</td></tr>';
   h+='<tr>'+head.map(function(x){return '<th>'+x+'</th>';}).join("")+'</tr>';
-  var tBoq=0,tExt=0,tEst=0,tAct=0;
+  var tBoq=0,tExt=0,tExtUsd=0,tEst=0,tAct=0;
   rows.forEach(function(r){
-    tBoq+=r.d.total_egp;tExt+=r.ext;tEst+=r.est;tAct+=r.a;
+    tBoq+=r.d.total_egp;tExt+=r.ext;tExtUsd+=r.extUsd;tEst+=r.est;tAct+=r.a;
     h+='<tr>'+td(r.d.section)+td(r.d.desc)+td(r.d.cat)+td(r.d.unit)+
        td(r.d.unit_egp.toFixed(2),1)+td(r.d.total_egp.toFixed(2),1)+
-       td(r.tq)+td(r.ext.toFixed(2),1)+td(r.tp.toFixed(1))+
+       td(r.tq)+td(r.extUsd.toFixed(2),1)+td(r.ext.toFixed(2),1)+td(r.tp.toFixed(1))+
        td(r.p)+td(r.est.toFixed(2),1)+td(r.a)+td((r.est-r.a).toFixed(2),1)+'</tr>';
   });
   h+='<tr style="font-weight:bold"><td colspan="5">\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a</td>'+
-     td(tBoq.toFixed(2),1)+'<td></td>'+td(tExt.toFixed(2),1)+'<td></td><td></td>'+
+     td(tBoq.toFixed(2),1)+'<td></td>'+td(tExtUsd.toFixed(2),1)+td(tExt.toFixed(2),1)+'<td></td><td></td>'+
      td(tEst.toFixed(2),1)+td(tAct.toFixed(2),1)+td((tEst-tAct).toFixed(2),1)+'</tr>';
   h+='</table></body></html>';
   var a=document.createElement("a");
