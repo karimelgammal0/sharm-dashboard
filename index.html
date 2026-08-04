@@ -1749,6 +1749,9 @@ function cellNum(col,row,v,s){
   if(v==null||isNaN(v))return '<c r="'+colName(col)+row+'" s="'+(s||0)+'"/>';
   return '<c r="'+colName(col)+row+'" s="'+(s||0)+'"><v>'+(Math.round(v*100)/100)+'</v></c>';
 }
+function cellFml(col,row,f,v,st){
+  return '<c r="'+colName(col)+row+'" s="'+(st||0)+'"><f>'+xe(f)+'</f><v>'+(Math.round((v||0)*100)/100)+'</v></c>';
+}
 function sheetXml(o){
   var x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
     '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
@@ -1856,7 +1859,7 @@ var ITEM_META=(function(){
     if(r.type==="section"){sec=r.section;sub="";}
     else if(r.type==="subheader"){sub=r.desc;sec=r.section;}
     else if(r.type==="item"){
-      meta[k++]={code:r.code||"",sec:groupSec(r.section||sec),sub:sub,scope:workScope(sub,r.desc)};
+      meta[k++]={code:r.code||"",sec:(r.section||sec||""),grp:groupSec(r.section||sec),sub:sub,scope:workScope(sub,r.desc)};
     }
   }
   return meta;
@@ -1870,7 +1873,7 @@ function exportCostControl(){
   var rows=ccRows(),L=lastIssued();
   var data=rows.map(function(r){
     var m=ccMeta(r.i);
-    return {code:m.code,sec:m.sec||"—",scope:m.scope,sub:m.sub,desc:r.d.desc,cat:r.d.cat,unit:r.d.unit,
+    return {code:m.code,sec:m.sec||"—",grp:m.grp||"",scope:m.scope,sub:m.sub,desc:r.d.desc,cat:r.d.cat,unit:r.d.unit,
       unitEgp:r.d.unit_egp,boq:r.d.total_egp,tq:r.tq,extUsd:r.extUsd,ext:r.ext,tp:r.tp,
       p:r.p,est:r.est,act:r.a,vr:r.est-r.a};
   });
@@ -1891,10 +1894,12 @@ function exportCostControl(){
   /* ---------- Sheet 1 : DATA ---------- */
   var R=[],rn=1;
   R.push('<row r="1" ht="22" customHeight="1">'+cellTxt(1,1,title,1)+'</row>');
-  var t2='<row r="2" ht="20" customHeight="1">'+cellTxt(1,2,"\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a",7)+cellTxt(2,2,"",7)+cellTxt(3,2,"",7)+
-    cellTxt(4,2,data.length+" \u0628\u0646\u062f",7)+cellTxt(5,2,"",7)+cellTxt(6,2,"",7)+cellTxt(7,2,"",7)+
-    cellNum(8,2,T.boq,8)+cellNum(9,2,T.tq,8)+cellNum(10,2,T.extUsd,8)+cellNum(11,2,T.ext,8)+
-    cellTxt(12,2,"",7)+cellTxt(13,2,"",7)+cellNum(14,2,T.est,8)+cellNum(15,2,T.act,8)+cellNum(16,2,T.est-T.act,8)+'</row>';
+  var LR=Math.max(data.length+3,4);
+  function ST(cn,val){return cellFml(cn,2,"SUBTOTAL(109,"+colName(cn)+"4:"+colName(cn)+LR+")",val,8);}
+  var t2='<row r="2" ht="20" customHeight="1">'+cellTxt(1,2,"\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a (\u062d\u0633\u0628 \u0627\u0644\u0641\u0644\u062a\u0631)",7)+cellTxt(2,2,"",7)+cellTxt(3,2,"",7)+
+    cellFml(4,2,'SUBTOTAL(103,A4:A'+LR+')',data.length,13)+cellTxt(5,2,"",7)+cellTxt(6,2,"",7)+cellTxt(7,2,"",7)+
+    ST(8,T.boq)+ST(9,T.tq)+ST(10,T.extUsd)+ST(11,T.ext)+
+    cellTxt(12,2,"",7)+cellTxt(13,2,"",7)+ST(14,T.est)+ST(15,T.act)+ST(16,T.est-T.act)+'</row>';
   R.push(t2);
   var h='<row r="3" ht="34" customHeight="1">';
   for(var c=0;c<NC;c++)h+=cellTxt(c+1,3,HEAD[c],2);
@@ -1967,7 +1972,7 @@ function exportCostControl(){
     {name:"_rels/.rels",data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
       '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
     {name:"xl/workbook.xml",data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
-      '<workbookPr/><sheets><sheet name="Cost Control" sheetId="1" r:id="rId1"/><sheet name="Pivot" sheetId="2" r:id="rId2"/></sheets></workbook>'},
+      '<workbookPr/><sheets><sheet name="Cost Control" sheetId="1" r:id="rId1"/><sheet name="Pivot" sheetId="2" r:id="rId2"/></sheets><calcPr calcId="0" fullCalcOnLoad="1"/></workbook>'},
     {name:"xl/_rels/workbook.xml.rels",data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
       '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'+
       '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/>'+
