@@ -346,6 +346,7 @@ label.pl{font-size:10px;color:var(--muted);font-weight:600;display:block;margin-
       <button class="btn" onclick="issueCertificate()" id="btn-issue" style="background:#1E6F50;color:#fff;border-color:#1E6F50">&#x2714; &#x625;&#x635;&#x62F;&#x627;&#x631; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;</button>
       <button class="btn" onclick="newCertificate()" id="btn-newcert" style="background:#185EA5;color:#fff;border-color:#185EA5;display:none">&#x2795; &#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x62C;&#x62F;&#x64A;&#x62F;</button>
       <button class="btn" onclick="unlockExtract()" id="btn-unlock" style="background:#7D5A00;color:#fff;border-color:#7D5A00;display:none">&#x1F513; &#x641;&#x62A;&#x62D; &#x627;&#x644;&#x62A;&#x639;&#x62F;&#x64A;&#x644; (&#x635;&#x644;&#x627;&#x62D;&#x64A;&#x629;)</button>
+      <button class="btn" onclick="resetPrevAll()" id="btn-resetprev" style="background:#7D5A00;color:#fff;border-color:#7D5A00">&#x21BA; &#x62A;&#x635;&#x641;&#x64A;&#x631; &#x627;&#x644;&#x633;&#x627;&#x628;&#x642; (&#x635;&#x644;&#x627;&#x62D;&#x64A;&#x629;)</button>
       <button class="btn" onclick="clearAll()" id="btn-clear">&#x1F5D1; Clear All</button>
       <span style="font-size:11px;color:var(--muted)" id="ex-count"></span>
     </div>
@@ -1726,12 +1727,12 @@ function renderExtract(){
     row += '<td class="unit-c">'+d.unit+'</td>';
     row += '<td class="num" style="font-size:11px;color:var(--muted)">'+d.qty.toLocaleString("en-US")+'</td>';
     row += '<td class="num" style="font-size:11px">$'+d.unit_price.toLocaleString("en-US")+'</td>';
-    row += '<td class="td-qp num">'+(d.prev_qty||0).toLocaleString("en-US")+'</td>';
+    row += '<td class="td-qp num" ondblclick="editPrev('+d.id+',0)" style="cursor:pointer" title="\u062f\u0628\u0644 \u0643\u0644\u064a\u0643 \u0644\u0644\u062a\u0639\u062f\u064a\u0644 (\u0635\u0644\u0627\u062d\u064a\u0629)">'+(d.prev_qty||0).toLocaleString("en-US")+'</td>';
     row += '<td class="td-qc num" id="cq-'+d.id+'" style="'+(cq?'font-weight:700':'color:#bbb')+'">'+(cq?cq.toLocaleString("en-US"):"\u2014")+'</td>';
-    row += '<td class="input-cell td-qt"><input type="number" min="0" placeholder="0" step="any" id="inp-tq-'+d.id+'" oninput="updRow('+d.id+',0,this.value)" title="\u0627\u0644\u0643\u0645\u064a\u0629 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629 \u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a\u0629"></td>';
-    row += '<td class="td-pp num">'+(d.prev_pct||0).toFixed(1)+'%</td>';
+    row += '<td class="input-cell td-qt"><input type="number" min="0" placeholder="0" step="any" id="inp-tq-'+d.id+'" oninput="updRow('+d.id+',0,this.value,false)" onchange="updRow('+d.id+',0,this.value,true)" title="\u0627\u0644\u0643\u0645\u064a\u0629 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629 \u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a\u0629"></td>';
+    row += '<td class="td-pp num" ondblclick="editPrev('+d.id+',1)" style="cursor:pointer" title="\u062f\u0628\u0644 \u0643\u0644\u064a\u0643 \u0644\u0644\u062a\u0639\u062f\u064a\u0644 (\u0635\u0644\u0627\u062d\u064a\u0629)">'+(d.prev_pct||0).toFixed(1)+'%</td>';
     row += '<td class="td-pc num" id="cp-'+d.id+'" style="'+(cp?'font-weight:700':'color:#bbb')+'">'+(cp?cp.toFixed(1)+'%':"\u2014")+'</td>';
-    row += '<td class="input-cell td-pt"><input type="number" min="0" max="100" placeholder="0" step="0.1" id="inp-tp-'+d.id+'" oninput="updRow('+d.id+',1,this.value)" title="\u0625\u062c\u0645\u0627\u0644\u064a \u0646\u0633\u0628\u0629 \u0627\u0644\u062a\u0646\u0641\u064a\u0630 \u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a\u0629"></td>';
+    row += '<td class="input-cell td-pt"><input type="number" min="0" max="100" placeholder="0" step="0.1" id="inp-tp-'+d.id+'" oninput="updRow('+d.id+',1,this.value,false)" onchange="updRow('+d.id+',1,this.value,true)" title="\u0625\u062c\u0645\u0627\u0644\u064a \u0646\u0633\u0628\u0629 \u0627\u0644\u062a\u0646\u0641\u064a\u0630 \u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a\u0629"></td>';
     row += '<td class="td-w num" id="tw-'+d.id+'">'+(works>0?fmtUSD(works):"\u2014")+'</td>';
     row += '</tr>';
     return row;
@@ -1752,47 +1753,103 @@ function renderExtract(){
 
 function round6(n){return Math.round((+n||0)*1e6)/1e6;}
 
-function updRow(id,field,val){
+function exWarn(msg){
+  var lb=g("ex-warn");
+  if(!lb)return;
+  if(!msg){lb.style.display="none";return;}
+  lb.textContent="\u26a0 "+msg;lb.style.display="";
+  clearTimeout(window.__exWarnT);
+  window.__exWarnT=setTimeout(function(){lb.style.display="none";},4000);
+}
+
+/* commit=false \u2192 \u0623\u062b\u0646\u0627\u0621 \u0627\u0644\u0643\u062a\u0627\u0628\u0629 (\u0644\u0627 \u0646\u0644\u0645\u0633 \u0627\u0644\u062e\u0627\u0646\u0629 \u0625\u0637\u0644\u0627\u0642\u064b\u0627)
+   commit=true  \u2192 \u0639\u0646\u062f \u0627\u0644\u062e\u0631\u0648\u062c \u0645\u0646 \u0627\u0644\u062e\u0627\u0646\u0629 (\u0646\u0635\u062d\u0651\u062d \u0627\u0644\u0642\u064a\u0645\u0629 \u0625\u0646 \u0644\u0632\u0645) */
+function updRow(id,field,val,commit){
   if(exLocked){alert("\u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0645\u064f\u0635\u062f\u0631 \u0648\u0645\u0642\u0641\u0644 \u2014 \u0644\u0627 \u064a\u0645\u0643\u0646 \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u0625\u0644\u0627 \u0628\u0635\u0644\u0627\u062d\u064a\u0629.");renderExtract();return;}
   var item=null;
   for(var i=0;i<exData.length;i++){if(exData[i].id===id){item=exData[i];break;}}
   if(!item)return;
 
-  /* \u0627\u0644\u0625\u062f\u062e\u0627\u0644 \u0627\u0644\u0622\u0646 = \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a\u060c \u0648\u0627\u0644\u062d\u0627\u0644\u064a = \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u2212 \u0627\u0644\u0633\u0627\u0628\u0642 */
-  var warn="";
+  var raw=(val===null||val===undefined)?"":String(val).trim();
+  var num=parseFloat(raw);
+  var blank=(raw==="");
+  if(isNaN(num))num=0;
+
+  /* \u0627\u0644\u0625\u062f\u062e\u0627\u0644 = \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a\u060c \u0648\u0627\u0644\u062d\u0627\u0644\u064a = \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u2212 \u0627\u0644\u0633\u0627\u0628\u0642 */
+  var warn="", fixTo=null;
   if(field===0){
     var pq=+(item.prev_qty||0);
-    var totQ=parseFloat(val);
-    if(isNaN(totQ))totQ=0;
-    if(totQ<pq){ totQ=pq; warn="\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u0644\u0627 \u064a\u0645\u0643\u0646 \u0623\u0646 \u064a\u0642\u0644 \u0639\u0646 \u0627\u0644\u0643\u0645\u064a\u0629 \u0627\u0644\u0633\u0627\u0628\u0642\u0629 ("+pq+")."; }
-    item.curr_qty=round6(totQ-pq);
+    if(blank){ item.curr_qty=0; }
+    else{
+      if(num<pq){
+        /* \u0623\u062b\u0646\u0627\u0621 \u0627\u0644\u0643\u062a\u0627\u0628\u0629 \u0646\u0633\u0645\u062d \u0645\u0624\u0642\u062a\u064b\u0627 \u0648\u0646\u0646\u0628\u0651\u0647 \u0641\u0642\u0637 */
+        warn="\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a ("+num+") \u0623\u0642\u0644 \u0645\u0646 \u0627\u0644\u0643\u0645\u064a\u0629 \u0627\u0644\u0633\u0627\u0628\u0642\u0629 ("+pq+")";
+        if(commit){ fixTo=pq; num=pq; }
+      }
+      item.curr_qty=round6(Math.max(num-pq,0));
+    }
   }else{
     var pp=+(item.prev_pct||0);
-    var totP=parseFloat(val);
-    if(isNaN(totP))totP=0;
-    if(totP>100){ totP=100; warn="\u0623\u0642\u0635\u0649 \u0646\u0633\u0628\u0629 \u0625\u062c\u0645\u0627\u0644\u064a\u0629 100%."; }
-    if(totP<pp){ totP=pp; warn="\u0627\u0644\u0646\u0633\u0628\u0629 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629 \u0644\u0627 \u064a\u0645\u0643\u0646 \u0623\u0646 \u062a\u0642\u0644 \u0639\u0646 \u0627\u0644\u0633\u0627\u0628\u0642\u0629 ("+pp+"%)."; }
-    item.curr_pct=round6(totP-pp);
+    if(blank){ item.curr_pct=0; }
+    else{
+      if(num>100){
+        warn="\u0623\u0642\u0635\u0649 \u0646\u0633\u0628\u0629 \u0625\u062c\u0645\u0627\u0644\u064a\u0629 100%";
+        if(commit){ fixTo=100; num=100; }
+      }else if(num<pp){
+        warn="\u0627\u0644\u0646\u0633\u0628\u0629 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629 ("+num+"%) \u0623\u0642\u0644 \u0645\u0646 \u0627\u0644\u0633\u0627\u0628\u0642\u0629 ("+pp+"%)";
+        if(commit){ fixTo=pp; num=pp; }
+      }
+      item.curr_pct=round6(Math.max(Math.min(num,100)-pp,0));
+    }
   }
+
+  /* \u0644\u0627 \u0646\u0643\u062a\u0628 \u0641\u064a \u0627\u0644\u062e\u0627\u0646\u0629 \u0625\u0644\u0627 \u0628\u0639\u062f \u0627\u0644\u062e\u0631\u0648\u062c \u0645\u0646\u0647\u0627 */
+  if(commit && fixTo!==null){
+    var fixEl=g((field===0?"inp-tq-":"inp-tp-")+id);
+    if(fixEl)fixEl.value=round6(fixTo);
+  }
+  exWarn(warn);
+
   saveStorage();
   pushToDB(item);
   var t=rowTotals(item);
-  var tq=t.tq,tp=t.tp,works=t.works;
+  var works=t.works;
   var cq=+(item.curr_qty||0),cp=+(item.curr_pct||0);
   var cqEl=g("cq-"+id);var cpEl=g("cp-"+id);var twEl=g("tw-"+id);var tr=g("exr-"+id);
   if(cqEl){cqEl.textContent=cq?cq.toLocaleString("en-US"):"\u2014";cqEl.style.fontWeight=cq?"700":"";cqEl.style.color=cq?"":"#bbb";}
   if(cpEl){cpEl.textContent=cp?cp.toFixed(1)+"%":"\u2014";cpEl.style.fontWeight=cp?"700":"";cpEl.style.color=cp?"":"#bbb";}
   if(twEl)twEl.textContent=works>0?fmtUSD(works):"\u2014";
   if(tr)tr.className=(cq>0||cp>0)?"upd-row":"";
-  if(warn){
-    var fixEl=g((field===0?"inp-tq-":"inp-tp-")+id);
-    if(fixEl)fixEl.value=round6(field===0?tq:tp);
-    var lb=g("ex-warn");
-    if(lb){lb.textContent="\u26a0 "+warn;lb.style.display="";clearTimeout(window.__exWarnT);window.__exWarnT=setTimeout(function(){lb.style.display="none";},3500);}
-  }
   var sec=g("ex-section").value;var q=(g("ex-search").value||"").trim().toLowerCase();
   updateGrand(exData.filter(function(d){return(!sec||d.section===sec)&&(!q||(d.desc.toLowerCase().indexOf(q)>=0||d.code.toLowerCase().indexOf(q)>=0));}));
   updateSummary();
+}
+
+/* \u062a\u0639\u062f\u064a\u0644 \u062e\u0627\u0646\u0629 \u00ab\u0627\u0644\u0633\u0627\u0628\u0642\u00bb \u2014 \u0628\u0635\u0644\u0627\u062d\u064a\u0629 \u0627\u0644\u0623\u062f\u0645\u0646 (\u0644\u062a\u0635\u062d\u064a\u062d \u0628\u064a\u0627\u0646\u0627\u062a \u062e\u0627\u0637\u0626\u0629) */
+function editPrev(id,field){
+  var item=null;
+  for(var i=0;i<exData.length;i++){if(exData[i].id===id){item=exData[i];break;}}
+  if(!item)return;
+  if(!requireAdmin("\u062a\u0639\u062f\u064a\u0644 \u0627\u0644\u0642\u064a\u0645 \u0627\u0644\u0633\u0627\u0628\u0642\u0629 \u064a\u062d\u062a\u0627\u062c \u0635\u0644\u0627\u062d\u064a\u0629 \u0627\u0644\u0623\u062f\u0645\u0646.")) return;
+  var isQ=(field===0);
+  var cur=isQ?(+(item.prev_qty||0)):(+(item.prev_pct||0));
+  var v=prompt((isQ?"\u0627\u0644\u0643\u0645\u064a\u0629 \u0627\u0644\u0633\u0627\u0628\u0642\u0629":"\u0627\u0644\u0646\u0633\u0628\u0629 \u0627\u0644\u0633\u0627\u0628\u0642\u0629 %")+" \u0644\u0644\u0628\u0646\u062f "+item.code+":",cur);
+  if(v===null)return;
+  var n=parseFloat(v); if(isNaN(n)||n<0)n=0;
+  if(!isQ && n>100)n=100;
+  if(isQ)item.prev_qty=round6(n); else item.prev_pct=round6(n);
+  saveStorage();pushToDB(item);renderExtract();
+}
+
+/* \u062a\u0635\u0641\u064a\u0631 \u0643\u0644 \u0627\u0644\u0642\u064a\u0645 \u0627\u0644\u0633\u0627\u0628\u0642\u0629 \u062f\u0648\u0646 \u0627\u0644\u0645\u0633\u0627\u0633 \u0628\u0627\u0644\u062d\u0627\u0644\u064a */
+function resetPrevAll(){
+  if(!requireAdmin("\u062a\u0635\u0641\u064a\u0631 \u062e\u0627\u0646\u0627\u062a \u00ab\u0627\u0644\u0633\u0627\u0628\u0642\u00bb \u0644\u0643\u0644 \u0627\u0644\u0628\u0646\u0648\u062f \u064a\u062d\u062a\u0627\u062c \u0635\u0644\u0627\u062d\u064a\u0629 \u0627\u0644\u0623\u062f\u0645\u0646.")) return;
+  var n=exData.filter(function(d){return (d.prev_qty||0)>0||(d.prev_pct||0)>0;}).length;
+  if(!n){alert("\u0644\u0627 \u062a\u0648\u062c\u062f \u0642\u064a\u0645 \u0633\u0627\u0628\u0642\u0629 \u0645\u0633\u062c\u0644\u0629.");return;}
+  if(!confirm("\u062a\u0635\u0641\u064a\u0631 \u0627\u0644\u0642\u064a\u0645 \u0627\u0644\u0633\u0627\u0628\u0642\u0629 \u0644\u0640 "+n+" \u0628\u0646\u062f\u061f\n(\u0627\u0644\u0625\u062f\u062e\u0627\u0644\u0627\u062a \u0627\u0644\u062d\u0627\u0644\u064a\u0629 \u0644\u0646 \u062a\u062a\u0623\u062b\u0631)")) return;
+  exData=exData.map(function(d){return Object.assign({},d,{prev_qty:0,prev_pct:0});});
+  saveStorage();pushAllToDB();renderExtract();
+  alert("\u2714 \u062a\u0645 \u062a\u0635\u0641\u064a\u0631 \u0627\u0644\u0642\u064a\u0645 \u0627\u0644\u0633\u0627\u0628\u0642\u0629.");
 }
 
 function prevWorksOf(d){
