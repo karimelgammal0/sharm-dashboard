@@ -578,7 +578,7 @@ label.pl{font-size:10px;color:var(--muted);font-weight:600;display:block;margin-
     <!-- Controls -->
     <div class="filters">
       <label style="font-size:12px;color:var(--navy);display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600">
-        <input type="checkbox" id="pay-autolink" onchange="togglePayAuto()">
+        <input type="checkbox" id="pay-autolink" checked onchange="togglePayAuto()">
         &#x631;&#x628;&#x637; &#x62A;&#x644;&#x642;&#x627;&#x626;&#x64A;: &#x627;&#x644;&#x62F;&#x641;&#x639;&#x627;&#x62A; &#x642;&#x628;&#x644; &#x62A;&#x627;&#x631;&#x64A;&#x62E; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; = &#x627;&#x644;&#x62F;&#x641;&#x639;&#x627;&#x62A; &#x627;&#x644;&#x633;&#x627;&#x628;&#x642;&#x629;
       </label>
       <button class="btn" onclick="applyPayToPrev()" id="btn-pay-apply">&#x21BB; &#x62A;&#x631;&#x62D;&#x64A;&#x644; &#x627;&#x644;&#x62D;&#x635;&#x64A;&#x644; &#x644;&#x644;&#x645;&#x644;&#x62E;&#x635;</button>
@@ -1106,13 +1106,14 @@ function getCV(){
 var CUR_DEF={USD:1,EGP:51,EUR:0.92,GBP:0.79,SAR:3.75,AED:3.67,KWD:0.31};
 var CUR_SYM={USD:"$",EGP:"\u062c.\u0645",EUR:"\u20ac",GBP:"\u00a3",SAR:"SAR",AED:"AED",KWD:"KWD"};
 var payments=[];
-var payAuto=false;
+var payAuto=true;
 
 function loadPayments(){
   try{
     var s=localStorage.getItem("boq_payments_v1");
     if(s){var p=JSON.parse(s);if(p&&p.length)payments=p;}
-    payAuto=localStorage.getItem("boq_pay_auto")==="1";
+    var pa=localStorage.getItem("boq_pay_auto");
+    payAuto=(pa===null)?true:(pa==="1");
   }catch(e){}
 }
 function savePayments(){
@@ -1121,6 +1122,7 @@ function savePayments(){
     localStorage.setItem("boq_pay_auto",payAuto?"1":"0");
   }catch(e){}
   scheduleStatePush();
+  try{ if(typeof updateSummary==="function") updateSummary(); }catch(e){}
 }
 function sortPayments(){
   payments.sort(function(a,b){return (a.date||"")<(b.date||"")?-1:((a.date||"")>(b.date||"")?1:0);});
@@ -1414,13 +1416,19 @@ function updateSummary(){
 
   var due = worksTotal + vatAmt + siAmt - advDed - retAmt - prevAmt;
 
+  var prevLbl='Previous Payments Collected ($)';
+  if(payAuto){
+    var nBefore=payments.filter(function(p){return p.date && p.date < certDate();}).length;
+    prevLbl+=' &mdash; <span style="font-size:10.5px;color:#1E6F50">'+nBefore+' payment(s) before '+certDate()+'</span>';
+  }
+
   var rows = [
     {label:'Total Certified Works',  val:worksTotal, sign:'',  bold:false, bg:'#F8F9FA'},
     {label:'VAT ('+cv.vat+'%)',       val:vatAmt,     sign:'+', bold:false, bg:'#fff'},
     {label:'Social Insurance ('+cv.si+'%)', val:siAmt, sign:'+',bold:false, bg:'#F8F9FA'},
     {label:'Advance Payment Deduction', val:advDed,   sign:'-', bold:false, bg:'#fff'},
     {label:'Retention ('+cv.ret+'%)', val:retAmt,     sign:'-', bold:false, bg:'#F8F9FA'},
-    {label:'Previous Payments Collected ($)', val:prevAmt, sign:'-', bold:false, bg:'#fff'},
+    {label:prevLbl, val:prevAmt, sign:'-', bold:false, bg:'#fff'},
   ];
 
   var pcFin = g('pc-financials');
@@ -2693,7 +2701,7 @@ function renderCharts(){
 initFilters();renderBOQ();renderOverview();renderCosts();loadCVars();initCCFilters();
 syncCertNo();renderCertLog();
 (function(){var pd=g("pay-date");if(pd&&!pd.value)pd.value=new Date().toISOString().slice(0,10);})();
-payCurChanged();renderPayments();
+payCurChanged();renderPayments();updateSummary();
 applyExLock();
 
 // ═══════════════════════════════════════════════════════════
