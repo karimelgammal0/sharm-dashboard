@@ -85,8 +85,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;fon
 td.num.zero{color:#ccc;font-size:10px;text-align:center}
 .pl28{padding-left:28px!important}
 body.rtl .pl28{padding-right:28px!important;padding-left:10px!important}
-td.input-cell{padding:3px 5px;text-align:center}
-td.input-cell input{width:72px;font-size:11.5px;text-align:center;padding:3px 4px;border:1px solid var(--bd);border-radius:5px;height:26px;outline:none}
+td.input-cell{padding:3px 5px;text-align:center}td.input-cell input{width:72px;font-size:11.5px;text-align:center;padding:3px 4px;border:1px solid var(--bd);border-radius:5px;height:26px;outline:none}
 td.input-cell input:focus{border-color:var(--blue);background:#EEF5FF}
 .th-qty{background:#EAF4FF!important;color:#185EA5!important}
 .th-pct{background:#EAF7F0!important;color:#1E6F50!important}
@@ -98,6 +97,11 @@ td.input-cell input:focus{border-color:var(--blue);background:#EEF5FF}
 .td-wu{background:#FDF2E9;color:#935116;font-weight:700}
 tr.cc-total-top td{background:#F2F5F9;font-weight:700;color:#1F3864;border-bottom:2px solid #1F3864;font-size:12px}
 .upd-row td{background:#F0FBF6}
+label.pl{font-size:10px;color:var(--muted);font-weight:600;display:block;margin-bottom:3px}
+.pi{width:100%;font-size:12.5px;padding:6px 9px;border:1px solid var(--bd);border-radius:6px;height:34px;outline:none;font-family:inherit;background:#fff}
+.pi:focus{border-color:var(--blue);background:#F7FBFF}
+.pay-before td{background:#EAF5EF}
+.pay-after td{background:#FDF6E3}
 .total-row td{font-weight:700;background:#EEF4FF;color:var(--navy)}
 .costs-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px}
 .cost-kpi{background:#fff;border-radius:8px;padding:13px 15px;border:1px solid var(--bd);border-top:3px solid var(--cl,var(--gold))}
@@ -117,7 +121,7 @@ tr.cc-total-top td{background:#F2F5F9;font-weight:700;color:#1F3864;border-botto
 @media print {
   /* Hide everything except the certificate */
   header, .tabs, #pane-overview, #pane-boq, #pane-costs, #pane-charts,
-  .filters, .info-box, #expane-detail, #expane-log, #ex-draft-bar, #ex-warn, .ex-stab, .btn,
+  .filters, .info-box, #expane-detail, #expane-log, #expane-pay, #ex-draft-bar, #ex-warn, .ex-stab, .btn,
   .hdr-right, #lang-btn, .costs-summary,
   [id^="tab-"], div.filters, div.info-box,
   #sync-bar, .no-print { display:none !important; }
@@ -273,6 +277,10 @@ tr.cc-total-top td{background:#F2F5F9;font-weight:700;color:#1F3864;border-botto
       style="padding:8px 18px;font-size:12.5px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted);margin-bottom:-2px">
       &#x1F4C4; Certificate Summary
     </button>
+    <button class="ex-stab" onclick="switchExTab('pay')" id="exstab-pay"
+      style="padding:8px 18px;font-size:12.5px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted);margin-bottom:-2px">
+      &#x1F4B0; &#x627;&#x644;&#x62F;&#x641;&#x639;&#x627;&#x62A; &#x627;&#x644;&#x645;&#x62D;&#x635;&#x644;&#x629;
+    </button>
     <button class="ex-stab" onclick="switchExTab('log')" id="exstab-log"
       style="padding:8px 18px;font-size:12.5px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted);margin-bottom:-2px">
       &#x1F4DA; &#x633;&#x62C;&#x644; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;&#x627;&#x62A;
@@ -317,7 +325,7 @@ tr.cc-total-top td{background:#F2F5F9;font-weight:700;color:#1F3864;border-botto
           oninput="updateSummary()">
       </div>
       <div>
-        <label style="font-size:10px;color:var(--muted);font-weight:600;display:block;margin-bottom:3px">PREV. PAYMENTS COLLECTED ($)</label>
+        <label style="font-size:10px;color:var(--muted);font-weight:600;display:block;margin-bottom:3px">PREV. PAYMENTS COLLECTED ($) <span id="cv-prev-auto-tag" style="display:none;color:#1E6F50">&#x2022; AUTO</span></label>
         <input type="number" id="cv-prev" placeholder="0.00" step="0.01"
           style="width:100%;font-size:13px;padding:6px 9px;border:1px solid var(--bd);border-radius:6px;height:34px"
           oninput="updateSummary()">
@@ -431,7 +439,7 @@ tr.cc-total-top td{background:#F2F5F9;font-weight:700;color:#1F3864;border-botto
         </div>
         <div style="padding:10px 14px;border-right:1px solid #E0E0E0">
           <div style="color:#6C757D;font-size:10px;font-weight:600;margin-bottom:2px">CERTIFICATE DATE</div>
-          <div><input type="date" id="pc-date" style="font-size:12px;border:none;outline:none;font-family:inherit;color:#1A1A1A;font-weight:600;cursor:pointer" oninput="updateSummary()"></div>
+          <div><input type="date" id="pc-date" style="font-size:12px;border:none;outline:none;font-family:inherit;color:#1A1A1A;font-weight:600;cursor:pointer" oninput="updateSummary();renderPayments()"></div>
         </div>
         <div style="padding:10px 14px">
           <div style="color:#6C757D;font-size:10px;font-weight:600;margin-bottom:2px">CERTIFICATE No.</div>
@@ -495,6 +503,117 @@ tr.cc-total-top td{background:#F2F5F9;font-weight:700;color:#1F3864;border-botto
 
     </div><!-- /print-area -->
   </div><!-- /expane-summary -->
+
+  <!-- ── SUB-PANE: PAYMENTS COLLECTED ── -->
+  <div id="expane-pay" style="display:none" dir="rtl">
+
+    <!-- KPIs -->
+    <div id="pay-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:14px"></div>
+
+    <!-- Add payment form -->
+    <div style="background:#fff;border:1px solid var(--bd);border-radius:10px;padding:14px 18px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:6px">
+        <span style="display:block;width:3px;height:14px;background:var(--gold);border-radius:2px"></span>
+        &#x625;&#x636;&#x627;&#x641;&#x629; &#x62F;&#x641;&#x639;&#x629; &#x645;&#x62D;&#x635;&#x644;&#x629;
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;align-items:end">
+        <div>
+          <label class="pl">&#x627;&#x644;&#x62A;&#x627;&#x631;&#x64A;&#x62E;</label>
+          <input type="date" id="pay-date" class="pi">
+        </div>
+        <div>
+          <label class="pl">&#x631;&#x642;&#x645; &#x627;&#x644;&#x634;&#x64A;&#x643; / &#x627;&#x644;&#x62A;&#x62D;&#x648;&#x64A;&#x644;</label>
+          <input type="text" id="pay-ref" class="pi" placeholder="&#x645;&#x62B;&#x627;&#x644;: 123456">
+        </div>
+        <div>
+          <label class="pl">&#x627;&#x644;&#x628;&#x646;&#x643; &#x627;&#x644;&#x645;&#x62D;&#x635;&#x644;</label>
+          <input type="text" id="pay-bank" class="pi" list="bank-list" placeholder="&#x627;&#x633;&#x645; &#x627;&#x644;&#x628;&#x646;&#x643;">
+          <datalist id="bank-list">
+            <option value="البنك الأهلي المصري"></option>
+            <option value="بنك مصر"></option>
+            <option value="البنك التجاري الدولي CIB"></option>
+            <option value="بنك القاهرة"></option>
+            <option value="البنك العربي الأفريقي"></option>
+            <option value="بنك الإسكندرية"></option>
+            <option value="QNB الأهلي"></option>
+            <option value="بنك الإمارات دبي الوطني"></option>
+            <option value="نقدًا / خزينة"></option>
+          </datalist>
+        </div>
+        <div>
+          <label class="pl">&#x627;&#x644;&#x639;&#x645;&#x644;&#x629;</label>
+          <select id="pay-cur" class="pi" onchange="payCurChanged()">
+            <option value="USD">USD &#x2014; دولار</option>
+            <option value="EGP">EGP &#x2014; جنيه</option>
+            <option value="EUR">EUR &#x2014; يورو</option>
+            <option value="GBP">GBP &#x2014; إسترليني</option>
+            <option value="SAR">SAR &#x2014; ريال سعودي</option>
+            <option value="AED">AED &#x2014; درهم</option>
+            <option value="KWD">KWD &#x2014; دينار كويتي</option>
+          </select>
+        </div>
+        <div>
+          <label class="pl">&#x627;&#x644;&#x645;&#x628;&#x644;&#x63A;</label>
+          <input type="number" id="pay-amt" class="pi" step="any" min="0" placeholder="0.00" oninput="payPreview()">
+        </div>
+        <div>
+          <label class="pl">&#x633;&#x639;&#x631; &#x627;&#x644;&#x635;&#x631;&#x641; (&#x644;&#x643;&#x644; 1$)</label>
+          <input type="number" id="pay-rate" class="pi" step="any" min="0" value="1" oninput="payPreview()">
+        </div>
+        <div>
+          <label class="pl">&#x627;&#x644;&#x645;&#x639;&#x627;&#x62F;&#x644; ($)</label>
+          <div id="pay-usd-prev" style="height:34px;display:flex;align-items:center;font-weight:700;color:var(--navy);font-size:13px">$0.00</div>
+        </div>
+        <div>
+          <label class="pl">&#x628;&#x64A;&#x627;&#x646; / &#x645;&#x644;&#x627;&#x62D;&#x638;&#x627;&#x62A;</label>
+          <input type="text" id="pay-note" class="pi" placeholder="&#x62F;&#x641;&#x639;&#x629; &#x639;&#x644;&#x649; &#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; ...">
+        </div>
+        <div>
+          <button class="btn btn-primary" onclick="addPayment()" style="width:100%;height:34px;justify-content:center">&#x2795; &#x625;&#x636;&#x627;&#x641;&#x629;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="filters">
+      <label style="font-size:12px;color:var(--navy);display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600">
+        <input type="checkbox" id="pay-autolink" onchange="togglePayAuto()">
+        &#x631;&#x628;&#x637; &#x62A;&#x644;&#x642;&#x627;&#x626;&#x64A;: &#x627;&#x644;&#x62F;&#x641;&#x639;&#x627;&#x62A; &#x642;&#x628;&#x644; &#x62A;&#x627;&#x631;&#x64A;&#x62E; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; = &#x627;&#x644;&#x62F;&#x641;&#x639;&#x627;&#x62A; &#x627;&#x644;&#x633;&#x627;&#x628;&#x642;&#x629;
+      </label>
+      <button class="btn" onclick="applyPayToPrev()" id="btn-pay-apply">&#x21BB; &#x62A;&#x631;&#x62D;&#x64A;&#x644; &#x627;&#x644;&#x62D;&#x635;&#x64A;&#x644; &#x644;&#x644;&#x645;&#x644;&#x62E;&#x635;</button>
+      <button class="btn" onclick="exportPaymentsCSV()" style="margin-right:auto">&#x2B07; &#x62A;&#x635;&#x62F;&#x64A;&#x631; CSV</button>
+      <span style="font-size:11px;color:var(--muted)" id="pay-count"></span>
+    </div>
+    <div class="info-box" id="pay-info"></div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:center;min-width:95px">&#x627;&#x644;&#x62A;&#x627;&#x631;&#x64A;&#x62E;</th>
+            <th style="text-align:center">&#x631;&#x642;&#x645; &#x627;&#x644;&#x634;&#x64A;&#x643;</th>
+            <th style="text-align:center;min-width:130px">&#x627;&#x644;&#x628;&#x646;&#x643;</th>
+            <th style="text-align:center">&#x627;&#x644;&#x639;&#x645;&#x644;&#x629;</th>
+            <th class="num">&#x627;&#x644;&#x645;&#x628;&#x644;&#x63A;</th>
+            <th class="num">&#x633;&#x639;&#x631; &#x627;&#x644;&#x635;&#x631;&#x641;</th>
+            <th class="num">&#x627;&#x644;&#x645;&#x639;&#x627;&#x62F;&#x644; ($)</th>
+            <th class="num">&#x627;&#x644;&#x62A;&#x631;&#x627;&#x643;&#x645;&#x64A; ($)</th>
+            <th style="text-align:center">&#x627;&#x644;&#x628;&#x64A;&#x627;&#x646;</th>
+            <th style="text-align:center">&#x627;&#x644;&#x62D;&#x627;&#x644;&#x629;</th>
+            <th style="text-align:center">&#x62D;&#x630;&#x641;</th>
+          </tr>
+        </thead>
+        <tbody id="pay-body"></tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="6" style="padding:9px 10px">&#x625;&#x62C;&#x645;&#x627;&#x644;&#x64A; &#x627;&#x644;&#x645;&#x62D;&#x635;&#x644;</td>
+            <td class="num td-w" id="pay-grand" style="font-size:14px">$0</td>
+            <td colspan="4"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div><!-- /expane-pay -->
 
   <!-- ── SUB-PANE: CERTIFICATES LOG ── -->
   <div id="expane-log" style="display:none" dir="rtl">
@@ -980,10 +1099,227 @@ function getCV(){
   };
 }
 
+/* =======================================================================
+   \u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0645\u062d\u0635\u0644\u0629 (\u0645\u062a\u0639\u062f\u062f \u0627\u0644\u0639\u0645\u0644\u0627\u062a)
+   ======================================================================= */
+var CUR_DEF={USD:1,EGP:51,EUR:0.92,GBP:0.79,SAR:3.75,AED:3.67,KWD:0.31};
+var CUR_SYM={USD:"$",EGP:"\u062c.\u0645",EUR:"\u20ac",GBP:"\u00a3",SAR:"SAR",AED:"AED",KWD:"KWD"};
+var payments=[];
+var payAuto=false;
+
+function loadPayments(){
+  try{
+    var s=localStorage.getItem("boq_payments_v1");
+    if(s){var p=JSON.parse(s);if(p&&p.length)payments=p;}
+    payAuto=localStorage.getItem("boq_pay_auto")==="1";
+  }catch(e){}
+}
+function savePayments(){
+  try{
+    localStorage.setItem("boq_payments_v1",JSON.stringify(payments));
+    localStorage.setItem("boq_pay_auto",payAuto?"1":"0");
+  }catch(e){}
+  scheduleStatePush();
+}
+function sortPayments(){
+  payments.sort(function(a,b){return (a.date||"")<(b.date||"")?-1:((a.date||"")>(b.date||"")?1:0);});
+}
+function payUSD(p){
+  var r=parseFloat(p.rate);
+  if(!r||r<=0)r=1;
+  return (parseFloat(p.amount)||0)/r;
+}
+/* \u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0627\u0644\u062c\u0627\u0631\u064a */
+function certDate(){
+  var d=g("pc-date");
+  return (d&&d.value)?d.value:new Date().toISOString().slice(0,10);
+}
+/* \u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0645\u062d\u0635\u0644 \u0642\u0628\u0644 \u062a\u0627\u0631\u064a\u062e \u0645\u0639\u064a\u0651\u0646 (= \u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0633\u0627\u0628\u0642\u0629 \u0644\u0644\u0645\u0633\u062a\u062e\u0644\u0635) */
+function paymentsBefore(dateStr){
+  return payments.reduce(function(s,p){
+    return s+((p.date && dateStr && p.date < dateStr)?payUSD(p):0);
+  },0);
+}
+function paymentsTotal(){
+  return payments.reduce(function(s,p){return s+payUSD(p);},0);
+}
+
+function payCurChanged(){
+  var c=g("pay-cur").value;
+  var r=g("pay-rate");
+  if(r) r.value=(CUR_DEF[c]!==undefined?CUR_DEF[c]:1);
+  payPreview();
+}
+function payPreview(){
+  var amt=parseFloat((g("pay-amt")||{}).value)||0;
+  var rate=parseFloat((g("pay-rate")||{}).value)||1;
+  if(rate<=0)rate=1;
+  setText("pay-usd-prev",fmtUSD(amt/rate)==="\u2014"?"$0.00":fmtUSD(amt/rate));
+}
+
+function addPayment(){
+  var date=(g("pay-date")||{}).value||"";
+  var ref =((g("pay-ref")||{}).value||"").trim();
+  var bank=((g("pay-bank")||{}).value||"").trim();
+  var cur =(g("pay-cur")||{}).value||"USD";
+  var amt =parseFloat((g("pay-amt")||{}).value)||0;
+  var rate=parseFloat((g("pay-rate")||{}).value)||1;
+  var note=((g("pay-note")||{}).value||"").trim();
+
+  if(!date){alert("\u0627\u062e\u062a\u0631 \u062a\u0627\u0631\u064a\u062e \u0627\u0644\u062f\u0641\u0639\u0629.");return;}
+  if(amt<=0){alert("\u0623\u062f\u062e\u0644 \u0645\u0628\u0644\u063a\u064b\u0627 \u0623\u0643\u0628\u0631 \u0645\u0646 \u0635\u0641\u0631.");return;}
+  if(rate<=0){alert("\u0633\u0639\u0631 \u0627\u0644\u0635\u0631\u0641 \u064a\u062c\u0628 \u0623\u0646 \u064a\u0643\u0648\u0646 \u0623\u0643\u0628\u0631 \u0645\u0646 \u0635\u0641\u0631.");return;}
+  if(!ref && !confirm("\u0644\u0645 \u062a\u062f\u062e\u0644 \u0631\u0642\u0645 \u0627\u0644\u0634\u064a\u0643 / \u0627\u0644\u062a\u062d\u0648\u064a\u0644 \u2014 \u0645\u062a\u0627\u0628\u0639\u0629\u061f")) return;
+  /* \u0645\u0646\u0639 \u0627\u0644\u062a\u0643\u0631\u0627\u0631 \u0628\u0646\u0641\u0633 \u0631\u0642\u0645 \u0627\u0644\u0634\u064a\u0643 \u0648\u0627\u0644\u0628\u0646\u0643 */
+  if(ref){
+    for(var i=0;i<payments.length;i++){
+      if(payments[i].ref===ref && payments[i].bank===bank){
+        if(!confirm("\u064a\u0648\u062c\u062f \u0634\u064a\u0643 \u0628\u0646\u0641\u0633 \u0627\u0644\u0631\u0642\u0645 \u0648\u0627\u0644\u0628\u0646\u0643 \u0628\u062a\u0627\u0631\u064a\u062e "+payments[i].date+". \u0625\u0636\u0627\u0641\u0629 \u0639\u0644\u0649 \u0623\u064a \u062d\u0627\u0644\u061f")) return;
+        break;
+      }
+    }
+  }
+  payments.push({
+    id:"p"+Date.now()+Math.floor(Math.random()*1000),
+    date:date,ref:ref,bank:bank,cur:cur,amount:amt,rate:rate,note:note,
+    by:(typeof currentUser!=="undefined"&&currentUser)?currentUser:"-"
+  });
+  sortPayments();
+  savePayments();
+  g("pay-ref").value="";g("pay-amt").value="";g("pay-note").value="";
+  payPreview();
+  renderPayments();
+  updateSummary();
+}
+
+function deletePayment(id){
+  var idx=-1;
+  for(var i=0;i<payments.length;i++){if(payments[i].id===id){idx=i;break;}}
+  if(idx<0)return;
+  var p=payments[idx];
+  /* \u062f\u0641\u0639\u0629 \u0645\u062d\u062a\u0633\u0628\u0629 \u0636\u0645\u0646 \u0645\u0633\u062a\u062e\u0644\u0635 \u0645\u064f\u0635\u062f\u0631 \u2192 \u0635\u0644\u0627\u062d\u064a\u0629 \u0623\u062f\u0645\u0646 */
+  if(issuedCerts.length && !requireAdmin("\u0647\u0630\u0647 \u0627\u0644\u062f\u0641\u0639\u0629 \u062f\u0627\u062e\u0644\u0629 \u0641\u064a \u062d\u0633\u0627\u0628 \u0645\u0633\u062a\u062e\u0644\u0635 \u0645\u064f\u0635\u062f\u0631 \u2014 \u0627\u0644\u062d\u0630\u0641 \u064a\u062d\u062a\u0627\u062c \u0635\u0644\u0627\u062d\u064a\u0629 \u0627\u0644\u0623\u062f\u0645\u0646.")) return;
+  if(!confirm("\u062d\u0630\u0641 \u0627\u0644\u062f\u0641\u0639\u0629 \u0628\u062a\u0627\u0631\u064a\u062e "+p.date+" \u0628\u0645\u0628\u0644\u063a "+p.amount+" "+p.cur+"\u061f")) return;
+  payments.splice(idx,1);
+  savePayments();
+  renderPayments();
+  updateSummary();
+}
+
+function togglePayAuto(){
+  var cb=g("pay-autolink");
+  payAuto=!!(cb&&cb.checked);
+  savePayments();
+  var inp=g("cv-prev");
+  if(inp){inp.readOnly=payAuto;inp.style.background=payAuto?"#F1F3F5":"";}
+  var tag=g("cv-prev-auto-tag"); if(tag)tag.style.display=payAuto?"":"none";
+  updateSummary();
+  renderPayments();
+}
+
+/* \u062a\u0631\u062d\u064a\u0644 \u0627\u0644\u0645\u062d\u0635\u0644 \u0642\u0628\u0644 \u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0625\u0644\u0649 \u062e\u0627\u0646\u0629 \u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0633\u0627\u0628\u0642\u0629 */
+function applyPayToPrev(){
+  var t=paymentsBefore(certDate());
+  var inp=g("cv-prev"); if(!inp)return;
+  var was=inp.readOnly; inp.readOnly=false;
+  inp.value=t.toFixed(2);
+  inp.readOnly=was;
+  updateSummary();
+  renderPayments();
+  alert("\u2714 \u062a\u0645 \u062a\u0631\u062d\u064a\u0644 "+fmtUSD(t)+" \u0643\u062f\u0641\u0639\u0627\u062a \u0633\u0627\u0628\u0642\u0629 \u0645\u062d\u0635\u0644\u0629 \u0642\u0628\u0644 "+certDate()+".");
+}
+
+function renderPayments(){
+  var cb=g("pay-autolink"); if(cb)cb.checked=payAuto;
+  var inp=g("cv-prev");
+  if(inp){inp.readOnly=payAuto;inp.style.background=payAuto?"#F1F3F5":"";}
+  var tag=g("cv-prev-auto-tag"); if(tag)tag.style.display=payAuto?"":"none";
+
+  var b=g("pay-body"); if(!b)return;
+  var cd=certDate();
+  sortPayments();
+  var before=paymentsBefore(cd);
+  var total=paymentsTotal();
+  var after=total-before;
+
+  setText("pay-count",payments.length+" \u062f\u0641\u0639\u0629");
+  var infoEl=g("pay-info");
+  if(infoEl){
+    infoEl.innerHTML="\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0645\u062d\u0635\u0644\u0629 \u0642\u0628\u0644 \u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0627\u0644\u062d\u0627\u0644\u064a (<b>"+cd+"</b>) = <b>"+fmtUSD(before)+"</b> \u2014 \u0648\u0647\u0648 \u0627\u0644\u0645\u0628\u0644\u063a \u0627\u0644\u0645\u062e\u0635\u0648\u0645 \u0643\u0640 \u00ab\u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0633\u0627\u0628\u0642\u0629 \u0627\u0644\u0645\u062d\u0635\u0644\u0629\u00bb \u0641\u064a \u0645\u0644\u062e\u0635 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635."+
+      (payAuto?" <span style='color:#1E6F50;font-weight:700'>(\u0627\u0644\u0631\u0628\u0637 \u0627\u0644\u062a\u0644\u0642\u0627\u0626\u064a \u0645\u064f\u0641\u0639\u0651\u0644)</span>":" <span style='color:#7D5A00;font-weight:700'>(\u0627\u0644\u0631\u0628\u0637 \u0627\u0644\u062a\u0644\u0642\u0627\u0626\u064a \u0645\u064f\u0639\u0637\u0651\u0644 \u2014 \u0627\u0644\u062e\u0627\u0646\u0629 \u064a\u062f\u0648\u064a\u0629)</span>");
+  }
+
+  /* KPIs */
+  var byCur={};
+  payments.forEach(function(p){
+    if(!byCur[p.cur])byCur[p.cur]=0;
+    byCur[p.cur]+=parseFloat(p.amount)||0;
+  });
+  var curLines=Object.keys(byCur).map(function(c){
+    return (CUR_SYM[c]||c)+" "+byCur[c].toLocaleString("en-US",{maximumFractionDigits:2});
+  }).join("  |  ")||"\u2014";
+  var kp=[
+    {lbl:"\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0645\u062d\u0635\u0644 (\u0645\u0639\u0627\u062f\u0644 $)",val:fmtUSD(total)==="\u2014"?"$0":fmtUSD(total),val2:payments.length+" \u062f\u0641\u0639\u0629",cl:"#1F3864"},
+    {lbl:"\u0645\u062d\u0635\u0644 \u0642\u0628\u0644 \u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635",val:fmtUSD(before)==="\u2014"?"$0":fmtUSD(before),val2:"\u0642\u0628\u0644 "+cd,cl:"#1E6F50"},
+    {lbl:"\u0645\u062d\u0635\u0644 \u0641\u064a/\u0628\u0639\u062f \u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635",val:fmtUSD(after)==="\u2014"?"$0":fmtUSD(after),val2:"\u0644\u0627 \u064a\u064f\u062e\u0635\u0645 \u0645\u0646 \u0647\u0630\u0627 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635",cl:"#7D5A00"},
+    {lbl:"\u062d\u0633\u0628 \u0627\u0644\u0639\u0645\u0644\u0629",val:'<span style="font-size:13px">'+curLines+'</span>',val2:"\u0628\u0627\u0644\u0642\u064a\u0645\u0629 \u0627\u0644\u0623\u0635\u0644\u064a\u0629",cl:"#185EA5"}
+  ];
+  var kEl=g("pay-kpis");
+  if(kEl){
+    kEl.innerHTML=kp.map(function(k){
+      return '<div class="cost-kpi" style="--cl:'+k.cl+'"><div class="lbl">'+k.lbl+'</div><div class="val">'+k.val+'</div><div class="val2">'+k.val2+'</div></div>';
+    }).join("");
+  }
+
+  if(!payments.length){
+    b.innerHTML='<tr><td colspan="11" style="padding:14px;text-align:center;color:#aaa;font-style:italic">\u0644\u0627 \u062a\u0648\u062c\u062f \u062f\u0641\u0639\u0627\u062a \u0645\u0633\u062c\u0644\u0629 \u0628\u0639\u062f</td></tr>';
+    setText("pay-grand","$0");
+    return;
+  }
+  var run=0;
+  b.innerHTML=payments.map(function(p){
+    var u=payUSD(p);
+    run+=u;
+    var isBefore=p.date && p.date<cd;
+    return '<tr class="r-item '+(isBefore?"pay-before":"pay-after")+'">'+
+      '<td style="text-align:center;font-size:11.5px">'+esc(p.date)+'</td>'+
+      '<td style="text-align:center;font-family:monospace;font-size:11.5px">'+(esc(p.ref)||"\u2014")+'</td>'+
+      '<td style="text-align:center;font-size:11.5px">'+(esc(p.bank)||"\u2014")+'</td>'+
+      '<td style="text-align:center;font-weight:700;font-size:11px">'+esc(p.cur)+'</td>'+
+      '<td class="num">'+(parseFloat(p.amount)||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'+
+      '<td class="num" style="font-size:11px;color:var(--muted)">'+(parseFloat(p.rate)||1)+'</td>'+
+      '<td class="num td-w">'+fmtUSD(u)+'</td>'+
+      '<td class="num" style="font-size:11.5px;color:var(--navy)">'+fmtUSD(run)+'</td>'+
+      '<td style="text-align:center;font-size:11px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(p.note)+'">'+(esc(p.note)||"\u2014")+'</td>'+
+      '<td style="text-align:center"><span style="background:'+(isBefore?"#EAF5EF":"#FDF6E3")+';color:'+(isBefore?"#14573C":"#7D5A00")+';padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600">'+
+        (isBefore?"\u0633\u0627\u0628\u0642\u0629":"\u062d\u0627\u0644\u064a\u0629/\u0644\u0627\u062d\u0642\u0629")+'</span></td>'+
+      '<td style="text-align:center"><button class="btn" style="padding:2px 7px;font-size:11px;background:#7D1C1C;color:#fff;border-color:#7D1C1C" onclick="deletePayment(\''+p.id+'\')">\ud83d\uddd1</button></td>'+
+      '</tr>';
+  }).join("");
+  setText("pay-grand",fmtUSD(run));
+}
+
+function exportPaymentsCSV(){
+  var out=["\uFEFFDate,ChequeRef,Bank,Currency,Amount,Rate,AmountUSD,Note,EnteredBy"];
+  sortPayments();
+  payments.forEach(function(p){
+    out.push([p.date,'"'+(p.ref||"").replace(/"/g,'""')+'"','"'+(p.bank||"").replace(/"/g,'""')+'"',
+              p.cur,p.amount,p.rate,payUSD(p).toFixed(2),
+              '"'+(p.note||"").replace(/"/g,'""')+'"','"'+(p.by||"").replace(/"/g,'""')+'"'].join(","));
+  });
+  out.push(["","","","","","TOTAL($)",paymentsTotal().toFixed(2),"",""].join(","));
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([out.join("\n")],{type:"text/csv;charset=utf-8"}));
+  a.download="Payments_Collected.csv";a.click();
+}
+
+loadPayments();
+
 function switchExTab(id){
   g('expane-detail').style.display  = id==='detail'  ? '' : 'none';
   g('expane-summary').style.display = id==='summary' ? '' : 'none';
   var lg=g('expane-log'); if(lg) lg.style.display = id==='log' ? '' : 'none';
+  var pp=g('expane-pay'); if(pp) pp.style.display = id==='pay' ? '' : 'none';
   document.querySelectorAll('.ex-stab').forEach(function(b){
     var active = b.id === 'exstab-'+id;
     b.style.color       = active ? 'var(--navy)' : 'var(--muted)';
@@ -992,6 +1328,7 @@ function switchExTab(id){
   });
   if(id==='summary') updateSummary();
   if(id==='log') renderCertLog();
+  if(id==='pay') renderPayments();
 }
 
 function calcWorksTotal(){
@@ -1003,6 +1340,15 @@ function calcWorksTotal(){
 }
 
 function updateSummary(){
+  /* \u0627\u0644\u0631\u0628\u0637 \u0627\u0644\u062a\u0644\u0642\u0627\u0626\u064a: \u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0645\u062d\u0635\u0644\u0629 \u0642\u0628\u0644 \u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 = \u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0633\u0627\u0628\u0642\u0629 */
+  if(payAuto){
+    var pin=g('cv-prev');
+    if(pin){
+      var auto=paymentsBefore(certDate());
+      var cur=parseFloat(pin.value)||0;
+      if(Math.abs(cur-auto)>0.005) pin.value=auto.toFixed(2);
+    }
+  }
   saveCVars();
   var cv = getCV();
   var worksTotal = calcWorksTotal();
@@ -1668,15 +2014,16 @@ function newCertificate(){
   var ni=g("pc-num-inp"); if(ni){ni.value=nextNo;setText("pc-num",String(nextNo));}
   var di=g("pc-date");    if(di){di.value=new Date().toISOString().slice(0,10);}
   var pv=g("cv-prev");
-  if(pv){
+  if(pv && !payAuto){
     var netPrev=cumulativeNetOfIssued();
-    if(netPrev>0 && confirm("\u062a\u062d\u062f\u064a\u062b \u062e\u0627\u0646\u0629 \u00ab\u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0633\u0627\u0628\u0642\u0629 \u0627\u0644\u0645\u062d\u0635\u0644\u0629\u00bb \u0625\u0644\u0649 "+fmtUSD(netPrev)+"\u061f")){
+    if(netPrev>0 && confirm("\u062a\u062d\u062f\u064a\u062b \u062e\u0627\u0646\u0629 \u00ab\u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0633\u0627\u0628\u0642\u0629 \u0627\u0644\u0645\u062d\u0635\u0644\u0629\u00bb \u0625\u0644\u0649 "+fmtUSD(netPrev)+"\u061f\n(\u0644\u0644\u062f\u0642\u0629 \u0641\u0639\u0651\u0644 \u0627\u0644\u0631\u0628\u0637 \u0627\u0644\u062a\u0644\u0642\u0627\u0626\u064a \u0645\u0646 \u062a\u0628\u0648\u064a\u0628 \u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0645\u062d\u0635\u0644\u0629)")){
       pv.value=netPrev.toFixed(2);
     }
   }
   saveIssued();
   renderExtract();
   renderCertLog();
+  renderPayments();
   alert("\u2795 \u062a\u0645 \u0641\u062a\u062d \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+nextNo+".\n\u0623\u062f\u062e\u0644 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a \u0644\u0644\u0643\u0645\u064a\u0629 \u0648\u0627\u0644\u0646\u0633\u0628\u0629\u060c \u0648\u0627\u0644\u062d\u0627\u0644\u064a \u064a\u064f\u062d\u0633\u0628 \u062a\u0644\u0642\u0627\u0626\u064a\u064b\u0627.");
 }
 
@@ -2287,7 +2634,10 @@ function renderCharts(){
 
 // INIT
 initFilters();renderBOQ();renderOverview();renderCosts();loadCVars();initCCFilters();
-syncCertNo();renderCertLog();applyExLock();
+syncCertNo();renderCertLog();
+(function(){var pd=g("pay-date");if(pd&&!pd.value)pd.value=new Date().toISOString().slice(0,10);})();
+payCurChanged();renderPayments();
+applyExLock();
 
 // ═══════════════════════════════════════════════════════════
 // SUPABASE SHARED DATABASE SYNC — using official JS client
@@ -2459,6 +2809,8 @@ function buildState(){
     issued: issuedCerts,
     locked: exLocked,
     draft: certDraft,
+    payments: payments,
+    payAuto: payAuto,
     cc: ccVals,
     cvars: cv,
     ts: new Date().toISOString(),
@@ -2475,7 +2827,9 @@ function applyState(st){
     if(typeof st.draft === "number" && st.draft>0) certDraft = st.draft;
     else if(st.issued) certDraft = st.issued.length || 1;
     if(st.cc) ccVals = st.cc;
-    saveIssued(); saveCC();
+    if(st.payments) payments = st.payments;
+    if(typeof st.payAuto === "boolean") payAuto = st.payAuto;
+    saveIssued(); saveCC(); savePayments();
     if(st.cvars){
       cvInputs.forEach(function(id){
         var el=g(id);
@@ -2573,6 +2927,7 @@ function refreshAll(){
     }
     syncCertNo();
     renderCertLog();
+    renderPayments();
     applyExLock();
   }catch(e){console.warn(e);}
 }
