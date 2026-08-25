@@ -117,7 +117,7 @@ tr.cc-total-top td{background:#F2F5F9;font-weight:700;color:#1F3864;border-botto
 @media print {
   /* Hide everything except the certificate */
   header, .tabs, #pane-overview, #pane-boq, #pane-costs, #pane-charts,
-  .filters, .info-box, #expane-detail, .ex-stab, .btn,
+  .filters, .info-box, #expane-detail, #expane-log, #ex-draft-bar, #ex-warn, .ex-stab, .btn,
   .hdr-right, #lang-btn, .costs-summary,
   [id^="tab-"], div.filters, div.info-box,
   #sync-bar, .no-print { display:none !important; }
@@ -273,6 +273,10 @@ tr.cc-total-top td{background:#F2F5F9;font-weight:700;color:#1F3864;border-botto
       style="padding:8px 18px;font-size:12.5px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted);margin-bottom:-2px">
       &#x1F4C4; Certificate Summary
     </button>
+    <button class="ex-stab" onclick="switchExTab('log')" id="exstab-log"
+      style="padding:8px 18px;font-size:12.5px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted);margin-bottom:-2px">
+      &#x1F4DA; &#x633;&#x62C;&#x644; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;&#x627;&#x62A;
+    </button>
   </div>
 
   <!-- ── CONTRACT VARIABLES PANEL ── -->
@@ -332,10 +336,13 @@ tr.cc-total-top td{background:#F2F5F9;font-weight:700;color:#1F3864;border-botto
         <input type="checkbox" id="print-active-only"> Active items only
       </label>
       <button class="btn" onclick="issueCertificate()" id="btn-issue" style="background:#1E6F50;color:#fff;border-color:#1E6F50">&#x2714; &#x625;&#x635;&#x62F;&#x627;&#x631; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;</button>
+      <button class="btn" onclick="newCertificate()" id="btn-newcert" style="background:#185EA5;color:#fff;border-color:#185EA5;display:none">&#x2795; &#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x62C;&#x62F;&#x64A;&#x62F;</button>
       <button class="btn" onclick="unlockExtract()" id="btn-unlock" style="background:#7D5A00;color:#fff;border-color:#7D5A00;display:none">&#x1F513; &#x641;&#x62A;&#x62D; &#x627;&#x644;&#x62A;&#x639;&#x62F;&#x64A;&#x644; (&#x635;&#x644;&#x627;&#x62D;&#x64A;&#x629;)</button>
       <button class="btn" onclick="clearAll()" id="btn-clear">&#x1F5D1; Clear All</button>
       <span style="font-size:11px;color:var(--muted)" id="ex-count"></span>
     </div>
+    <div id="ex-warn" dir="rtl" style="display:none;background:#FDF6E3;border:1px solid #E6D3A3;border-right:4px solid #C9A84C;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12.5px;color:#7D5A00;font-weight:600"></div>
+    <div id="ex-draft-bar" dir="rtl" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#EEF4FF;border:1px solid #BBD3F0;border-right:4px solid #185EA5;border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:12.5px;color:#1F3864;font-weight:600"></div>
     <div class="info-box" id="lbl-info">Enter current quantities and percentages &mdash; data saves automatically</div>
     <div id="ex-lock-bar" style="display:none;background:#FDECEA;border:1px solid #E6B0AA;border-right:4px solid #7D1C1C;border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:12.5px;color:#7D1C1C;font-weight:600" dir="rtl"></div>
     <div id="ex-issued-bar" style="display:none;background:#EAF5EF;border:1px solid #A9CFBC;border-right:4px solid #1E6F50;border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:12.5px;color:#14573C" dir="rtl"></div>
@@ -367,6 +374,14 @@ tr.cc-total-top td{background:#F2F5F9;font-weight:700;color:#1F3864;border-botto
           <tr class="total-row">
             <td colspan="12" style="padding:9px 10px" id="ex-lbl-grand">Total Certified Works</td>
             <td class="num td-w" id="ex-grand" style="font-size:14px">$0</td>
+          </tr>
+          <tr class="total-row" style="background:#EEF4FF;color:#1F3864">
+            <td colspan="12" style="padding:7px 10px" id="ex-lbl-prevworks">Previous Certificates</td>
+            <td class="num" id="ex-prevworks" style="font-size:12.5px">$0</td>
+          </tr>
+          <tr class="total-row" style="background:#EAF5EF;color:#14573C">
+            <td colspan="12" style="padding:7px 10px" id="ex-lbl-currworks">This Certificate (Current)</td>
+            <td class="num" id="ex-currworks" style="font-size:13px;font-weight:700">$0</td>
           </tr>
         </tfoot>
       </table>
@@ -420,7 +435,7 @@ tr.cc-total-top td{background:#F2F5F9;font-weight:700;color:#1F3864;border-botto
         </div>
         <div style="padding:10px 14px">
           <div style="color:#6C757D;font-size:10px;font-weight:600;margin-bottom:2px">CERTIFICATE No.</div>
-          <div><input type="number" id="pc-num-inp" value="1" min="1" style="font-size:13px;border:none;outline:none;font-family:inherit;color:#C9A84C;font-weight:700;width:60px;cursor:pointer" oninput="g('pc-num').textContent=this.value"></div>
+          <div><input type="number" id="pc-num-inp" value="1" min="1" readonly title="&#x631;&#x642;&#x645; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x62A;&#x644;&#x642;&#x627;&#x626;&#x64A; &#x2014; &#x64A;&#x632;&#x64A;&#x62F; &#x639;&#x646;&#x62F; &#x641;&#x62A;&#x62D; &#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x62C;&#x62F;&#x64A;&#x62F;" style="font-size:13px;border:none;outline:none;font-family:inherit;color:#C9A84C;font-weight:700;width:60px;background:transparent;cursor:default"></div>
         </div>
       </div>
 
@@ -480,6 +495,30 @@ tr.cc-total-top td{background:#F2F5F9;font-weight:700;color:#1F3864;border-botto
 
     </div><!-- /print-area -->
   </div><!-- /expane-summary -->
+
+  <!-- ── SUB-PANE: CERTIFICATES LOG ── -->
+  <div id="expane-log" style="display:none" dir="rtl">
+    <div class="info-box" style="margin-bottom:12px">
+      &#x633;&#x62C;&#x644; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;&#x627;&#x62A; &#x627;&#x644;&#x645;&#x64F;&#x635;&#x62F;&#x631;&#x629; &#x2014; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x627;&#x644;&#x645;&#x64F;&#x635;&#x62F;&#x631; &#x645;&#x642;&#x641;&#x644; &#x648;&#x644;&#x627; &#x64A;&#x64F;&#x639;&#x62F;&#x644; &#x625;&#x644;&#x627; &#x628;&#x635;&#x644;&#x627;&#x62D;&#x64A;&#x629; &#x627;&#x644;&#x623;&#x62F;&#x645;&#x646;.
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:center;min-width:60px">&#x631;&#x642;&#x645;</th>
+            <th style="text-align:center;min-width:95px">&#x627;&#x644;&#x62A;&#x627;&#x631;&#x64A;&#x62E;</th>
+            <th style="text-align:center">&#x628;&#x648;&#x627;&#x633;&#x637;&#x629;</th>
+            <th style="text-align:center">&#x627;&#x644;&#x628;&#x646;&#x648;&#x62F;</th>
+            <th class="num">&#x625;&#x62C;&#x645;&#x627;&#x644;&#x64A; &#x62A;&#x631;&#x627;&#x643;&#x645;&#x64A; ($)</th>
+            <th class="num">&#x642;&#x64A;&#x645;&#x629; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; ($)</th>
+            <th style="text-align:center">&#x627;&#x644;&#x62D;&#x627;&#x644;&#x629;</th>
+            <th style="text-align:center;min-width:190px">&#x625;&#x62C;&#x631;&#x627;&#x621;&#x627;&#x62A;</th>
+          </tr>
+        </thead>
+        <tbody id="cert-log-body"></tbody>
+      </table>
+    </div>
+  </div><!-- /expane-log -->
 
 </div><!-- /pane-extract -->
 
@@ -697,10 +736,10 @@ var TRANS={
     lTotal:"Total Contract Value",lDone:"Completed",lRemain:"Remaining",lItems:"Line Items",
     lProg:"Overall Progress",lSecProg:"Progress by Section",lItemsOnly:"Items only",
     thCode:"Code",thDesc:"Description",thUnit:"Unit",thQty:"Contract Qty",thPrice:"Unit Price ($)",thTotal:"Total ($)",
-    exQty:"Quantity",exPct:"Progress %",exWorks:"Works Total ($)",exPrev:"Previous",exCurr:"Current",exTot:"Total",
+    exQty:"Quantity",exPct:"Progress %",exWorks:"Works Total ($)",exPrev:"Previous",exCurr:"Current (auto)",exTot:"Total ✎",
     btnExport:"Export CSV",btnClear:"Clear All",
-    infoBox:"Enter current quantities and percentages — data saves automatically",
-    grandLabel:"Total Certified Works",
+    infoBox:"Enter the TOTAL (cumulative) quantity & percentage — Current = Total − Previous, calculated automatically",
+    grandLabel:"Total Certified Works",prevWorksLabel:"Previous Certificates (cumulative)",currWorksLabel:"This Certificate (current period)",
     kl:["Architectural","HVAC","Fire Fighting","Plumb/Irrig/Pools","Electrical","Gen & Fire Alarm","Landscape"],
     chart1:"Cost Distribution by Section",chart2:"Progress vs Contract Value",chart3:"Contract Value by Section ($)",
     allSec:"All Sections",srch:"Search..."
@@ -713,10 +752,10 @@ var TRANS={
     lTotal:"إجمالي قيمة العقد",lDone:"المنجز",lRemain:"المتبقي",lItems:"عدد البنود",
     lProg:"نسبة الإنجاز الكلية",lSecProg:"التقدم حسب القسم",lItemsOnly:"بنود فقط",
     thCode:"الكود",thDesc:"الوصف",thUnit:"الوحدة",thQty:"كمية العقد",thPrice:"سعر الوحدة ($)",thTotal:"الإجمالي ($)",
-    exQty:"الكمية",exPct:"نسبة التنفيذ %",exWorks:"إجمالي الأعمال ($)",exPrev:"سابقة",exCurr:"حالية",exTot:"إجمالية",
+    exQty:"الكمية",exPct:"نسبة التنفيذ %",exWorks:"إجمالي الأعمال ($)",exPrev:"سابقة",exCurr:"حالية (تلقائي)",exTot:"إجمالية ✎",
     btnExport:"تصدير CSV",btnClear:"مسح الكل",
-    infoBox:"أدخل الكميات والنسب – تُحفظ تلقائيًا في المتصفح",
-    grandLabel:"إجمالي الأعمال المنجزة",
+    infoBox:"أدخل «الإجمالي» التراكمي للكمية والنسبة — والكمية/النسبة الحالية تُحسب تلقائيًا = الإجمالي − السابق",
+    grandLabel:"إجمالي الأعمال المنجزة (تراكمي)",prevWorksLabel:"أعمال المستخلصات السابقة (تراكمي)",currWorksLabel:"قيمة أعمال هذا المستخلص (الحالي)",
     kl:["أعمال معمارية","التكييف","الإطفاء","سباكة وري وحمامات","كهرباء","مولد وإنذار","تنسيق حدائق"],
     chart1:"توزيع التكلفة حسب القسم",chart2:"التقدم مقابل قيمة العقد",chart3:"قيمة العقد حسب القسم ($)",
     allSec:"كل الأقسام",srch:"بحث..."
@@ -750,6 +789,7 @@ function applyLang(){
   setText("ex-th-pprev",T("exPrev"));setText("ex-th-pcurr",T("exCurr"));setText("ex-th-ptot",T("exTot"));
   setText("btn-export",T("btnExport"));setText("btn-clear",T("btnClear"));
   setText("lbl-info",T("infoBox"));setText("ex-lbl-grand",T("grandLabel"));
+  setText("ex-lbl-prevworks",T("prevWorksLabel"));setText("ex-lbl-currworks",T("currWorksLabel"));
   setText("lbl-chart1",T("chart1"));setText("lbl-chart2",T("chart2"));setText("lbl-chart3",T("chart3"));
   T("kl").forEach(function(k,i){setText("kl"+i,k);});
   ["f-section","ex-section"].forEach(function(id){
@@ -943,6 +983,7 @@ function getCV(){
 function switchExTab(id){
   g('expane-detail').style.display  = id==='detail'  ? '' : 'none';
   g('expane-summary').style.display = id==='summary' ? '' : 'none';
+  var lg=g('expane-log'); if(lg) lg.style.display = id==='log' ? '' : 'none';
   document.querySelectorAll('.ex-stab').forEach(function(b){
     var active = b.id === 'exstab-'+id;
     b.style.color       = active ? 'var(--navy)' : 'var(--muted)';
@@ -950,6 +991,7 @@ function switchExTab(id){
     b.style.fontWeight  = active ? '700' : '600';
   });
   if(id==='summary') updateSummary();
+  if(id==='log') renderCertLog();
 }
 
 function calcWorksTotal(){
@@ -1049,6 +1091,9 @@ function updateSummary(){
 
   // Also update the BOQ grand total
   setText('ex-grand', worksTotal>0?fmtUSD(worksTotal):'$0');
+  var prevW=exData.reduce(function(s,d){return s+prevWorksOf(d);},0);
+  setText('ex-prevworks', prevW>0?fmtUSD(prevW):'$0');
+  setText('ex-currworks', (worksTotal-prevW)>0?fmtUSD(worksTotal-prevW):'$0');
 }
 
 function printBOQDetail(){
@@ -1087,17 +1132,17 @@ function printBOQDetail(){
       var exId   = exItem ? exItem.id : null;
 
       // Get live values: prefer DOM (row rendered), fall back to exData stored values
-      var cqEl = exId ? document.getElementById('inp-cq-' + exId) : null;
-      var cpEl = exId ? document.getElementById('inp-cp-' + exId) : null;
+      var cqEl = exId ? document.getElementById('inp-tq-' + exId) : null;
+      var cpEl = exId ? document.getElementById('inp-tp-' + exId) : null;
 
       var prev_qty = exItem ? (exItem.prev_qty || 0) : 0;
       var curr_qty = exItem ? (exItem.curr_qty || 0) : 0;
       var prev_pct = exItem ? (exItem.prev_pct || 0) : 0;
       var curr_pct = exItem ? (exItem.curr_pct || 0) : 0;
 
-      // DOM live values override stored values when row is rendered
-      if(cqEl && cqEl.value !== '') curr_qty = parseFloat(cqEl.value) || 0;
-      if(cpEl && cpEl.value !== '') curr_pct = parseFloat(cpEl.value) || 0;
+      // DOM live values are TOTALS now → current = total − previous
+      if(cqEl && cqEl.value !== '') curr_qty = Math.max((parseFloat(cqEl.value)||0) - prev_qty, 0);
+      if(cpEl && cpEl.value !== '') curr_pct = Math.max((parseFloat(cpEl.value)||0) - prev_pct, 0);
 
       var tot_qty = prev_qty + curr_qty;
       var tot_pct = Math.min(prev_pct + curr_pct, 100);
@@ -1336,60 +1381,94 @@ function renderExtract(){
     row += '<td class="num" style="font-size:11px;color:var(--muted)">'+d.qty.toLocaleString("en-US")+'</td>';
     row += '<td class="num" style="font-size:11px">$'+d.unit_price.toLocaleString("en-US")+'</td>';
     row += '<td class="td-qp num">'+(d.prev_qty||0).toLocaleString("en-US")+'</td>';
-    row += '<td class="input-cell td-qc"><input type="number" min="0" placeholder="0" step="any" id="inp-cq-'+d.id+'" oninput="updRow('+d.id+',0,this.value)"></td>';
-    row += '<td class="td-qt num" id="tq-'+d.id+'">'+tq.toLocaleString("en-US")+'</td>';
+    row += '<td class="td-qc num" id="cq-'+d.id+'" style="'+(cq?'font-weight:700':'color:#bbb')+'">'+(cq?cq.toLocaleString("en-US"):"\u2014")+'</td>';
+    row += '<td class="input-cell td-qt"><input type="number" min="0" placeholder="0" step="any" id="inp-tq-'+d.id+'" oninput="updRow('+d.id+',0,this.value)" title="\u0627\u0644\u0643\u0645\u064a\u0629 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629 \u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a\u0629"></td>';
     row += '<td class="td-pp num">'+(d.prev_pct||0).toFixed(1)+'%</td>';
-    row += '<td class="input-cell td-pc"><input type="number" min="0" max="100" placeholder="0" step="0.1" id="inp-cp-'+d.id+'" oninput="updRow('+d.id+',1,this.value)"></td>';
-    row += '<td class="td-pt num" id="tp-'+d.id+'">'+tp.toFixed(1)+'%</td>';
+    row += '<td class="td-pc num" id="cp-'+d.id+'" style="'+(cp?'font-weight:700':'color:#bbb')+'">'+(cp?cp.toFixed(1)+'%':"\u2014")+'</td>';
+    row += '<td class="input-cell td-pt"><input type="number" min="0" max="100" placeholder="0" step="0.1" id="inp-tp-'+d.id+'" oninput="updRow('+d.id+',1,this.value)" title="\u0625\u062c\u0645\u0627\u0644\u064a \u0646\u0633\u0628\u0629 \u0627\u0644\u062a\u0646\u0641\u064a\u0630 \u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a\u0629"></td>';
     row += '<td class="td-w num" id="tw-'+d.id+'">'+(works>0?fmtUSD(works):"\u2014")+'</td>';
     row += '</tr>';
     return row;
   }).join("");
   // Set input values AFTER inserting HTML (avoids quote-escaping issues)
   rows.forEach(function(d){
-    var cqEl=g("inp-cq-"+d.id);
-    var cpEl=g("inp-cp-"+d.id);
-    if(cqEl && d.curr_qty) cqEl.value = d.curr_qty;
-    if(cpEl && d.curr_pct) cpEl.value = d.curr_pct;
+    var tqEl=g("inp-tq-"+d.id);
+    var tpEl=g("inp-tp-"+d.id);
+    var t=rowTotals(d);
+    if(tqEl && t.tq) tqEl.value = round6(t.tq);
+    if(tpEl && t.tp) tpEl.value = round6(t.tp);
   });
   updateGrand(rows);
   updateSummary();
   applyExLock();
+  renderDraftBar();
 }
+
+function round6(n){return Math.round((+n||0)*1e6)/1e6;}
 
 function updRow(id,field,val){
   if(exLocked){alert("\u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0645\u064f\u0635\u062f\u0631 \u0648\u0645\u0642\u0641\u0644 \u2014 \u0644\u0627 \u064a\u0645\u0643\u0646 \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u0625\u0644\u0627 \u0628\u0635\u0644\u0627\u062d\u064a\u0629.");renderExtract();return;}
   var item=null;
   for(var i=0;i<exData.length;i++){if(exData[i].id===id){item=exData[i];break;}}
   if(!item)return;
-  if(field===0)item.curr_qty=parseFloat(val)||0;
-  else item.curr_pct=parseFloat(val)||0;
+
+  /* \u0627\u0644\u0625\u062f\u062e\u0627\u0644 \u0627\u0644\u0622\u0646 = \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a\u060c \u0648\u0627\u0644\u062d\u0627\u0644\u064a = \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u2212 \u0627\u0644\u0633\u0627\u0628\u0642 */
+  var warn="";
+  if(field===0){
+    var pq=+(item.prev_qty||0);
+    var totQ=parseFloat(val);
+    if(isNaN(totQ))totQ=0;
+    if(totQ<pq){ totQ=pq; warn="\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u0644\u0627 \u064a\u0645\u0643\u0646 \u0623\u0646 \u064a\u0642\u0644 \u0639\u0646 \u0627\u0644\u0643\u0645\u064a\u0629 \u0627\u0644\u0633\u0627\u0628\u0642\u0629 ("+pq+")."; }
+    item.curr_qty=round6(totQ-pq);
+  }else{
+    var pp=+(item.prev_pct||0);
+    var totP=parseFloat(val);
+    if(isNaN(totP))totP=0;
+    if(totP>100){ totP=100; warn="\u0623\u0642\u0635\u0649 \u0646\u0633\u0628\u0629 \u0625\u062c\u0645\u0627\u0644\u064a\u0629 100%."; }
+    if(totP<pp){ totP=pp; warn="\u0627\u0644\u0646\u0633\u0628\u0629 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629 \u0644\u0627 \u064a\u0645\u0643\u0646 \u0623\u0646 \u062a\u0642\u0644 \u0639\u0646 \u0627\u0644\u0633\u0627\u0628\u0642\u0629 ("+pp+"%)."; }
+    item.curr_pct=round6(totP-pp);
+  }
   saveStorage();
   pushToDB(item);
-  var tq=(+(item.prev_qty||0))+(+(item.curr_qty||0));
-  var tp=Math.min((+(item.prev_pct||0))+(+(item.curr_pct||0)),100);
-  var works=item.unit_price*tq*(tp/100);
-  var tqEl=g("tq-"+id);var tpEl=g("tp-"+id);var twEl=g("tw-"+id);var tr=g("exr-"+id);
-  if(tqEl)tqEl.textContent=tq.toLocaleString("en-US");
-  if(tpEl)tpEl.textContent=tp.toFixed(1)+"%";
+  var t=rowTotals(item);
+  var tq=t.tq,tp=t.tp,works=t.works;
+  var cq=+(item.curr_qty||0),cp=+(item.curr_pct||0);
+  var cqEl=g("cq-"+id);var cpEl=g("cp-"+id);var twEl=g("tw-"+id);var tr=g("exr-"+id);
+  if(cqEl){cqEl.textContent=cq?cq.toLocaleString("en-US"):"\u2014";cqEl.style.fontWeight=cq?"700":"";cqEl.style.color=cq?"":"#bbb";}
+  if(cpEl){cpEl.textContent=cp?cp.toFixed(1)+"%":"\u2014";cpEl.style.fontWeight=cp?"700":"";cpEl.style.color=cp?"":"#bbb";}
   if(twEl)twEl.textContent=works>0?fmtUSD(works):"\u2014";
-  if(tr)tr.className=(+(item.curr_qty||0)>0||(+(item.curr_pct||0))>0)?"upd-row":"";
+  if(tr)tr.className=(cq>0||cp>0)?"upd-row":"";
+  if(warn){
+    var fixEl=g((field===0?"inp-tq-":"inp-tp-")+id);
+    if(fixEl)fixEl.value=round6(field===0?tq:tp);
+    var lb=g("ex-warn");
+    if(lb){lb.textContent="\u26a0 "+warn;lb.style.display="";clearTimeout(window.__exWarnT);window.__exWarnT=setTimeout(function(){lb.style.display="none";},3500);}
+  }
   var sec=g("ex-section").value;var q=(g("ex-search").value||"").trim().toLowerCase();
   updateGrand(exData.filter(function(d){return(!sec||d.section===sec)&&(!q||(d.desc.toLowerCase().indexOf(q)>=0||d.code.toLowerCase().indexOf(q)>=0));}));
   updateSummary();
 }
 
+function prevWorksOf(d){
+  var pq=+(d.prev_qty||0),pp=+(d.prev_pct||0);
+  return d.unit_price*pq*(pp/100);
+}
+
 function updateGrand(rows){
-  var grand=rows.reduce(function(s,d){
-    var tq=(+(d.prev_qty||0))+(+(d.curr_qty||0));
-    var tp=Math.min((+(d.prev_pct||0))+(+(d.curr_pct||0)),100);
-    return s+d.unit_price*tq*(tp/100);
-  },0);
+  var grand=0,prevW=0;
+  rows.forEach(function(d){
+    grand+=rowTotals(d).works;
+    prevW+=prevWorksOf(d);
+  });
   setText("ex-grand",grand>0?fmtUSD(grand):"$0");
+  setText("ex-prevworks",prevW>0?fmtUSD(prevW):"$0");
+  var cur=grand-prevW;
+  setText("ex-currworks",cur>0?fmtUSD(cur):"$0");
 }
 
 function clearAll(){
   if(exLocked){alert("\u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0645\u064f\u0635\u062f\u0631 \u0648\u0645\u0642\u0641\u0644 \u2014 \u0627\u0641\u062a\u062d \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u0628\u0635\u0644\u0627\u062d\u064a\u0629 \u0623\u0648\u0644\u0627\u064b.");return;}
+  if(issuedCerts.length && !requireAdmin("\u064a\u0648\u062c\u062f \u0645\u0633\u062a\u062e\u0644\u0635 \u0645\u064f\u0635\u062f\u0631 \u2014 \u0645\u0633\u062d \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u064a\u062d\u062a\u0627\u062c \u0635\u0644\u0627\u062d\u064a\u0629 \u0627\u0644\u0623\u062f\u0645\u0646.")) return;
   if(!confirm(isRTL?"\u0647\u0644 \u062a\u0631\u064a\u062f \u0645\u0633\u062d \u0643\u0644 \u0627\u0644\u0625\u062f\u062e\u0627\u0644\u0627\u062a\u061f":"Clear all entered data?"))return;
   exData=exData.map(function(d){return Object.assign({},d,{prev_qty:0,curr_qty:0,prev_pct:0,curr_pct:0});});
   saveStorage();renderExtract();
@@ -1456,6 +1535,8 @@ var EGP_RATE    = 51;
 
 var issuedCerts = [];
 var exLocked    = false;
+var certDraft   = 1;      /* \u0631\u0642\u0645 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0627\u0644\u062c\u0627\u0631\u064a \u0625\u0639\u062f\u0627\u062f\u0647 */
+var adminMode   = false;  /* \u062c\u0644\u0633\u0629 \u0635\u0644\u0627\u062d\u064a\u0629 \u0623\u062f\u0645\u0646 (\u063a\u064a\u0631 \u0645\u062d\u0641\u0648\u0638\u0629) */
 var activeCostTab = "summary";
 
 function loadIssued(){
@@ -1463,14 +1544,30 @@ function loadIssued(){
     var s=localStorage.getItem("boq_issued_v1");
     if(s){var p=JSON.parse(s); if(p&&p.length)issuedCerts=p;}
     exLocked = localStorage.getItem("boq_ex_locked")==="1";
+    var cd=parseInt(localStorage.getItem("boq_cert_draft"),10);
+    certDraft = (cd&&cd>0)?cd:(issuedCerts.length||1);
   }catch(e){}
 }
 function saveIssued(){
   try{
     localStorage.setItem("boq_issued_v1",JSON.stringify(issuedCerts));
     localStorage.setItem("boq_ex_locked",exLocked?"1":"0");
+    localStorage.setItem("boq_cert_draft",String(certDraft));
   }catch(e){}
   scheduleStatePush();
+}
+
+/* \u0637\u0644\u0628 \u0635\u0644\u0627\u062d\u064a\u0629 \u0627\u0644\u0623\u062f\u0645\u0646 */
+function requireAdmin(reason){
+  if(adminMode) return true;
+  var c=prompt((reason?reason+"\n\n":"")+"\u0623\u062f\u062e\u0644 \u0643\u0648\u062f \u0635\u0644\u0627\u062d\u064a\u0629 \u0627\u0644\u0623\u062f\u0645\u0646:");
+  if(c===null) return false;
+  if(c!==UNLOCK_CODE){
+    alert("\u274c \u0643\u0648\u062f \u063a\u064a\u0631 \u0635\u062d\u064a\u062d \u2014 \u0644\u0645 \u064a\u062a\u0645 \u062a\u0646\u0641\u064a\u0630 \u0627\u0644\u0625\u062c\u0631\u0627\u0621.");
+    return false;
+  }
+  adminMode=true;
+  return true;
 }
 function lastIssued(){return issuedCerts.length?issuedCerts[issuedCerts.length-1]:null;}
 
@@ -1499,38 +1596,182 @@ function issueCertificate(){
     alert("\u0644\u0627 \u062a\u0648\u062c\u062f \u0628\u0646\u0648\u062f \u0645\u064f\u062f\u062e\u0644\u0629 \u0644\u0625\u0635\u062f\u0627\u0631 \u0645\u0633\u062a\u062e\u0644\u0635.");
     return;
   }
-  var no=issuedCerts.length+1;
+  var no=certDraft||(issuedCerts.length+1);
+  var existingIdx=-1;
+  for(var k=0;k<issuedCerts.length;k++){if(issuedCerts[k].no===no){existingIdx=k;break;}}
+  var isReissue=existingIdx>=0;
+  if(isReissue && !requireAdmin("\u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+no+" \u0645\u064f\u0635\u062f\u0631 \u0645\u0633\u0628\u0642\u064b\u0627 \u2014 \u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u0625\u0635\u062f\u0627\u0631 \u062a\u062d\u062a\u0627\u062c \u0635\u0644\u0627\u062d\u064a\u0629 \u0623\u062f\u0645\u0646.")) return;
+
   var grand=rows.reduce(function(s,r){return s+r.works_usd;},0);
-  var msg="\u0625\u0635\u062f\u0627\u0631 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+no+"\n"+
+  var prevW=exData.reduce(function(s,d){return s+prevWorksOf(d);},0);
+  var curW=grand-prevW;
+  var msg="\u0625\u0635\u062f\u0627\u0631 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+no+(isReissue?" (\u0625\u0639\u0627\u062f\u0629 \u0625\u0635\u062f\u0627\u0631)":"")+"\n"+
           "\u0639\u062f\u062f \u0627\u0644\u0628\u0646\u0648\u062f: "+rows.length+"\n"+
-          "\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0623\u0639\u0645\u0627\u0644: "+fmtUSD(grand)+"\n\n"+
-          "\u0628\u0639\u062f \u0627\u0644\u0625\u0635\u062f\u0627\u0631 \u0644\u0646 \u064a\u0645\u0643\u0646 \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u0625\u0644\u0627 \u0628\u0635\u0644\u0627\u062d\u064a\u0629. \u0645\u062a\u0627\u0628\u0639\u0629\u061f";
+          "\u0625\u062c\u0645\u0627\u0644\u064a \u062a\u0631\u0627\u0643\u0645\u064a: "+fmtUSD(grand)+"\n"+
+          "\u0642\u064a\u0645\u0629 \u0647\u0630\u0627 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635: "+fmtUSD(curW)+"\n\n"+
+          "\u0628\u0639\u062f \u0627\u0644\u0625\u0635\u062f\u0627\u0631 \u0644\u0646 \u064a\u0645\u0643\u0646 \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u0625\u0644\u0627 \u0628\u0635\u0644\u0627\u062d\u064a\u0629 \u0627\u0644\u0623\u062f\u0645\u0646. \u0645\u062a\u0627\u0628\u0639\u0629\u061f";
   if(!confirm(msg))return;
   var d=new Date();
-  issuedCerts.push({
+  var cvSnap={};
+  try{cvInputs.forEach(function(id){var el=g(id);if(el)cvSnap[id]=el.value;});}catch(e){}
+  var rec={
     no:no,
-    date:d.toISOString().slice(0,10),
+    date:(g("pc-date")&&g("pc-date").value)?g("pc-date").value:d.toISOString().slice(0,10),
     time:d.toTimeString().slice(0,5),
     by:(typeof currentUser!=="undefined"&&currentUser)?currentUser:"-",
     grand_usd:grand,
+    prev_usd:prevW,
+    curr_usd:curW,
+    cvars:cvSnap,
     rows:rows
-  });
+  };
+  if(isReissue){ rec.reissued_at=d.toISOString(); issuedCerts[existingIdx]=rec; }
+  else { issuedCerts.push(rec); issuedCerts.sort(function(a,b){return a.no-b.no;}); }
+  certDraft=no;
   exLocked=true;
+  adminMode=false;
   saveIssued();
   renderExtract();
-  alert("\u2714 \u062a\u0645 \u0625\u0635\u062f\u0627\u0631 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+no+" \u0648\u0642\u0641\u0644 \u0627\u0644\u062a\u0639\u062f\u064a\u0644.");
+  renderCertLog();
+  alert("\u2714 \u062a\u0645 \u0625\u0635\u062f\u0627\u0631 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+no+" \u0648\u0642\u0641\u0644 \u0627\u0644\u062a\u0639\u062f\u064a\u0644.\n\u0644\u0628\u062f\u0621 \u0645\u0633\u062a\u062e\u0644\u0635 \u062c\u062f\u064a\u062f \u0627\u0636\u063a\u0637 \u00ab\u2795 \u0645\u0633\u062a\u062e\u0644\u0635 \u062c\u062f\u064a\u062f\u00bb.");
+}
+
+/* \u2795 \u0641\u062a\u062d \u0645\u0633\u062a\u062e\u0644\u0635 \u062c\u062f\u064a\u062f: \u062a\u0631\u062d\u064a\u0644 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0627\u062a \u0625\u0644\u0649 \u062e\u0627\u0646\u0629 \u00ab\u0627\u0644\u0633\u0627\u0628\u0642\u00bb \u062b\u0645 \u062a\u0635\u0641\u064a\u0631 \u0627\u0644\u062d\u0627\u0644\u064a */
+function newCertificate(){
+  if(!issuedCerts.length){
+    alert("\u0644\u0627 \u064a\u0648\u062c\u062f \u0645\u0633\u062a\u062e\u0644\u0635 \u0645\u064f\u0635\u062f\u0631 \u0628\u0639\u062f \u2014 \u0623\u0635\u062f\u0631 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0627\u0644\u062d\u0627\u0644\u064a \u0623\u0648\u0644\u0627\u064b.");
+    return;
+  }
+  if(!exLocked && certDraft>issuedCerts.length){
+    alert("\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+certDraft+" \u0645\u0641\u062a\u0648\u062d \u0628\u0627\u0644\u0641\u0639\u0644 \u0648\u0644\u0645 \u064a\u064f\u0635\u062f\u0631 \u0628\u0639\u062f.");
+    return;
+  }
+  if(!exLocked && !requireAdmin("\u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+certDraft+" \u0645\u0641\u062a\u0648\u062d \u0644\u0644\u062a\u0639\u062f\u064a\u0644 \u2014 \u0625\u0642\u0641\u0627\u0644\u0647 \u0648\u0628\u062f\u0621 \u0645\u0633\u062a\u062e\u0644\u0635 \u062c\u062f\u064a\u062f \u064a\u062d\u062a\u0627\u062c \u0635\u0644\u0627\u062d\u064a\u0629.")) return;
+
+  var nextNo=issuedCerts[issuedCerts.length-1].no+1;
+  var grand=calcWorksTotal();
+  if(!confirm("\u0641\u062a\u062d \u0645\u0633\u062a\u062e\u0644\u0635 \u062c\u062f\u064a\u062f \u0631\u0642\u0645 "+nextNo+"\n\n"+
+              "\u0633\u064a\u062a\u0645 \u062a\u0631\u062d\u064a\u0644 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0627\u062a \u0627\u0644\u062d\u0627\u0644\u064a\u0629 ("+fmtUSD(grand)+") \u0625\u0644\u0649 \u062e\u0627\u0646\u0629 \u00ab\u0627\u0644\u0633\u0627\u0628\u0642\u00bb\u060c\n"+
+              "\u0648\u062a\u0635\u0628\u062d \u062e\u0627\u0646\u0627\u062a \u0627\u0644\u062d\u0627\u0644\u064a = \u0635\u0641\u0631 \u062d\u062a\u0649 \u062a\u062f\u062e\u0644 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0627\u062a \u0627\u0644\u062c\u062f\u064a\u062f\u0629.\n\n\u0645\u062a\u0627\u0628\u0639\u0629\u061f")) return;
+
+  exData=exData.map(function(d){
+    var t=rowTotals(d);
+    return Object.assign({},d,{prev_qty:round6(t.tq),prev_pct:round6(t.tp),curr_qty:0,curr_pct:0});
+  });
+  saveStorage();
+  pushAllToDB();
+
+  /* \u062a\u062d\u062f\u064a\u062b \u0631\u0642\u0645 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0648\u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0633\u0627\u0628\u0642\u0629 */
+  certDraft=nextNo;
+  exLocked=false;
+  adminMode=false;
+  var ni=g("pc-num-inp"); if(ni){ni.value=nextNo;setText("pc-num",String(nextNo));}
+  var di=g("pc-date");    if(di){di.value=new Date().toISOString().slice(0,10);}
+  var pv=g("cv-prev");
+  if(pv){
+    var netPrev=cumulativeNetOfIssued();
+    if(netPrev>0 && confirm("\u062a\u062d\u062f\u064a\u062b \u062e\u0627\u0646\u0629 \u00ab\u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0633\u0627\u0628\u0642\u0629 \u0627\u0644\u0645\u062d\u0635\u0644\u0629\u00bb \u0625\u0644\u0649 "+fmtUSD(netPrev)+"\u061f")){
+      pv.value=netPrev.toFixed(2);
+    }
+  }
+  saveIssued();
+  renderExtract();
+  renderCertLog();
+  alert("\u2795 \u062a\u0645 \u0641\u062a\u062d \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+nextNo+".\n\u0623\u062f\u062e\u0644 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a \u0644\u0644\u0643\u0645\u064a\u0629 \u0648\u0627\u0644\u0646\u0633\u0628\u0629\u060c \u0648\u0627\u0644\u062d\u0627\u0644\u064a \u064a\u064f\u062d\u0633\u0628 \u062a\u0644\u0642\u0627\u0626\u064a\u064b\u0627.");
+}
+
+/* \u0635\u0627\u0641\u064a \u0627\u0644\u0645\u0633\u062a\u062d\u0642 \u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a \u0644\u0644\u0645\u0633\u062a\u062e\u0644\u0635\u0627\u062a \u0627\u0644\u0645\u064f\u0635\u062f\u0631\u0629 */
+function cumulativeNetOfIssued(){
+  var cv=getCV();
+  var g_=issuedCerts.length?issuedCerts[issuedCerts.length-1].grand_usd:0;
+  var vat=g_*(cv.vat/100), si=g_*(cv.si/100);
+  var adv=cv.contract>0?cv.advance*(g_/cv.contract):cv.advance;
+  var ret=g_*(cv.ret/100);
+  return g_+vat+si-adv-ret;
 }
 
 function unlockExtract(){
   if(!exLocked)return;
-  var c=prompt("\u0623\u062f\u062e\u0644 \u0643\u0648\u062f \u0627\u0644\u0635\u0644\u0627\u062d\u064a\u0629 \u0644\u0641\u062a\u062d \u0627\u0644\u062a\u0639\u062f\u064a\u0644:");
-  if(c===null)return;
-  if(c!==UNLOCK_CODE){
-    alert("\u0643\u0648\u062f \u063a\u064a\u0631 \u0635\u062d\u064a\u062d \u2014 \u0644\u0645 \u064a\u062a\u0645 \u0641\u062a\u062d \u0627\u0644\u062a\u0639\u062f\u064a\u0644.");
+  if(!requireAdmin("\u0641\u062a\u062d \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u0639\u0644\u0649 \u0645\u0633\u062a\u062e\u0644\u0635 \u0645\u064f\u0635\u062f\u0631 \u064a\u062d\u062a\u0627\u062c \u0635\u0644\u0627\u062d\u064a\u0629 \u0627\u0644\u0623\u062f\u0645\u0646.")) return;
+  exLocked=false;saveIssued();renderExtract();
+  alert("\ud83d\udd13 \u062a\u0645 \u0641\u062a\u062d \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u0639\u0644\u0649 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+certDraft+".\n\u0623\u0639\u062f \u0627\u0644\u0625\u0635\u062f\u0627\u0631 \u0628\u0639\u062f \u0627\u0646\u062a\u0647\u0627\u0621 \u0627\u0644\u062a\u0639\u062f\u064a\u0644.");
+}
+
+/* \u062d\u0630\u0641 \u0622\u062e\u0631 \u0645\u0633\u062a\u062e\u0644\u0635 \u0645\u064f\u0635\u062f\u0631 (\u0623\u062f\u0645\u0646 \u0641\u0642\u0637) */
+function deleteLastCert(){
+  if(!issuedCerts.length){alert("\u0644\u0627 \u064a\u0648\u062c\u062f \u0645\u0633\u062a\u062e\u0644\u0635 \u0645\u064f\u0635\u062f\u0631.");return;}
+  var L=issuedCerts[issuedCerts.length-1];
+  if(!requireAdmin("\u062d\u0630\u0641 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+L.no+" \u064a\u062d\u062a\u0627\u062c \u0635\u0644\u0627\u062d\u064a\u0629 \u0627\u0644\u0623\u062f\u0645\u0646.")) return;
+  if(!confirm("\u062d\u0630\u0641 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+L.no+" \u0646\u0647\u0627\u0626\u064a\u064b\u0627\u061f\n(\u0644\u0646 \u064a\u062a\u0645 \u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u0643\u0645\u064a\u0627\u062a \u0627\u0644\u0645\u064f\u062f\u062e\u0644\u0629 \u062d\u0627\u0644\u064a\u064b\u0627)")) return;
+  issuedCerts.pop();
+  certDraft=issuedCerts.length?issuedCerts[issuedCerts.length-1].no:1;
+  exLocked=issuedCerts.length>0;
+  saveIssued();renderExtract();renderCertLog();
+}
+
+/* \u0645\u0632\u0627\u0645\u0646\u0629 \u0631\u0642\u0645 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0641\u064a \u0648\u0627\u062c\u0647\u0629 \u0627\u0644\u0645\u0644\u062e\u0635 */
+function syncCertNo(){
+  var ni=g("pc-num-inp");
+  if(ni){ ni.value=certDraft; setText("pc-num",String(certDraft)); }
+}
+
+/* \u0634\u0631\u064a\u0637 \u062d\u0627\u0644\u0629 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0627\u0644\u062c\u0627\u0631\u064a */
+function renderDraftBar(){
+  var bar=g("ex-draft-bar"); if(!bar)return;
+  var issued=issuedCerts.length;
+  var isNewDraft=certDraft>issued;
+  var state = exLocked
+    ? "\ud83d\udd12 \u0645\u064f\u0635\u062f\u0631 \u0648\u0645\u0642\u0641\u0644"
+    : (isNewDraft?"\u270e \u062a\u062d\u062a \u0627\u0644\u0625\u0639\u062f\u0627\u062f":"\ud83d\udd13 \u0645\u0641\u062a\u0648\u062d \u0628\u0635\u0644\u0627\u062d\u064a\u0629 \u0623\u062f\u0645\u0646");
+  bar.innerHTML =
+    '<span>\u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0627\u0644\u062d\u0627\u0644\u064a: <b style="color:#C9A84C;font-size:14px">#'+certDraft+'</b></span>'+
+    '<span style="opacity:.4">|</span>'+
+    '<span>\u0627\u0644\u062d\u0627\u0644\u0629: '+state+'</span>'+
+    '<span style="opacity:.4">|</span>'+
+    '<span>\u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635\u0627\u062a \u0627\u0644\u0645\u064f\u0635\u062f\u0631\u0629: <b>'+issued+'</b></span>'+
+    (adminMode?'<span style="margin-right:auto;background:#7D5A00;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px">\u0648\u0636\u0639 \u0627\u0644\u0623\u062f\u0645\u0646 \u0645\u0641\u0639\u0651\u0644</span>':'');
+}
+
+/* \u0633\u062c\u0644 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635\u0627\u062a */
+function renderCertLog(){
+  var b=g("cert-log-body"); if(!b)return;
+  if(!issuedCerts.length){
+    b.innerHTML='<tr><td colspan="8" style="padding:14px;text-align:center;color:#aaa;font-style:italic">\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0633\u062a\u062e\u0644\u0635\u0627\u062a \u0645\u064f\u0635\u062f\u0631\u0629 \u0628\u0639\u062f</td></tr>';
     return;
   }
-  exLocked=false;saveIssued();renderExtract();
-  alert("\ud83d\udd13 \u062a\u0645 \u0641\u062a\u062d \u0627\u0644\u062a\u0639\u062f\u064a\u0644. \u0623\u0639\u062f \u0627\u0644\u0625\u0635\u062f\u0627\u0631 \u0628\u0639\u062f \u0627\u0646\u062a\u0647\u0627\u0621 \u0627\u0644\u062a\u0639\u062f\u064a\u0644.");
+  var last=issuedCerts[issuedCerts.length-1];
+  b.innerHTML=issuedCerts.map(function(c){
+    var isLast=c.no===last.no;
+    var cur=(typeof c.curr_usd==="number")?c.curr_usd:c.grand_usd;
+    return '<tr class="r-item">'+
+      '<td style="text-align:center;font-weight:700;color:#C9A84C">#'+c.no+'</td>'+
+      '<td style="text-align:center;font-size:11px">'+(c.date||"-")+'</td>'+
+      '<td style="text-align:center;font-size:11px">'+esc(c.by||"-")+'</td>'+
+      '<td style="text-align:center">'+(c.rows?c.rows.length:0)+'</td>'+
+      '<td class="num">'+fmtUSD(c.grand_usd)+'</td>'+
+      '<td class="num" style="font-weight:700;color:#14573C">'+fmtUSD(cur)+'</td>'+
+      '<td style="text-align:center"><span class="badge" style="background:'+(isLast&&!exLocked?'#FDF6E3':'#EAF5EF')+';color:'+(isLast&&!exLocked?'#7D5A00':'#14573C')+';padding:2px 8px;border-radius:10px;font-size:10.5px">'+
+        (isLast&&!exLocked?'\u0645\u0641\u062a\u0648\u062d \u0644\u0644\u062a\u0639\u062f\u064a\u0644':'\u0645\u064f\u0635\u062f\u0631 \u0648\u0645\u0642\u0641\u0644')+'</span></td>'+
+      '<td style="text-align:center">'+
+        '<button class="btn" style="padding:3px 8px;font-size:11px" onclick="exportCertCSV('+c.no+')">\u2b07 CSV</button> '+
+        (isLast?'<button class="btn" style="padding:3px 8px;font-size:11px;background:#7D1C1C;color:#fff;border-color:#7D1C1C" onclick="deleteLastCert()">\ud83d\uddd1 \u062d\u0630\u0641</button>':'')+
+      '</td></tr>';
+  }).join("");
+}
+
+/* \u062a\u0635\u062f\u064a\u0631 \u0645\u0633\u062a\u062e\u0644\u0635 \u0645\u064f\u0635\u062f\u0631 \u0645\u0639\u064a\u0651\u0646 */
+function exportCertCSV(no){
+  var c=null;
+  for(var i=0;i<issuedCerts.length;i++){if(issuedCerts[i].no===no){c=issuedCerts[i];break;}}
+  if(!c)return;
+  var out=["\uFEFFCode,Section,UnitPrice,PrevQty,CurrQty,TotQty,PrevPct,CurrPct,TotPct,WorksTotal"];
+  c.rows.forEach(function(r){
+    out.push([r.code,r.section,r.unit_price,r.prev_qty,r.curr_qty,r.tq,r.prev_pct,r.curr_pct,r.tp,(r.works_usd||0).toFixed(2)].join(","));
+  });
+  out.push(["","","","","","","","","TOTAL",(c.grand_usd||0).toFixed(2)].join(","));
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([out.join("\n")],{type:"text/csv;charset=utf-8"}));
+  a.download="Certificate_"+no+".csv";a.click();
 }
 
 function applyExLock(){
@@ -1543,23 +1784,28 @@ function applyExLock(){
       ins[i].style.cursor=exLocked?"not-allowed":"";
     }
   }
-  var bi=g("btn-issue"),bu=g("btn-unlock"),bc=g("btn-clear");
+  var bi=g("btn-issue"),bu=g("btn-unlock"),bc=g("btn-clear"),bn=g("btn-newcert");
   if(bi){bi.style.display=exLocked?"none":"";}
   if(bu){bu.style.display=exLocked?"":"none";}
+  if(bn){bn.style.display=issuedCerts.length?"":"none";}
   if(bc){bc.disabled=exLocked;bc.style.opacity=exLocked?"0.45":"";}
   var lb=g("ex-lock-bar"),ib=g("ex-issued-bar"),L=lastIssued();
   if(lb){
     lb.style.display=exLocked?"":"none";
     if(exLocked&&L){
-      lb.innerHTML="\ud83d\udd12 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+L.no+" \u0645\u064f\u0635\u062f\u0631 \u0628\u062a\u0627\u0631\u064a\u062e "+L.date+" \u2014 \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u0645\u0642\u0641\u0644. \u0627\u0636\u063a\u0637 \u00ab\u0641\u062a\u062d \u0627\u0644\u062a\u0639\u062f\u064a\u0644 (\u0635\u0644\u0627\u062d\u064a\u0629)\u00bb \u0644\u0644\u062a\u0639\u062f\u064a\u0644.";
+      lb.innerHTML="\ud83d\udd12 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+L.no+" \u0645\u064f\u0635\u062f\u0631 \u0628\u062a\u0627\u0631\u064a\u062e "+L.date+" \u2014 \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u0645\u0642\u0641\u0644. \u0627\u0636\u063a\u0637 \u00ab\u2795 \u0645\u0633\u062a\u062e\u0644\u0635 \u062c\u062f\u064a\u062f\u00bb \u0644\u0628\u062f\u0621 \u0645\u0633\u062a\u062e\u0644\u0635 \u062a\u0627\u0644\u064d\u060c \u0623\u0648 \u00ab\ud83d\udd13 \u0641\u062a\u062d \u0627\u0644\u062a\u0639\u062f\u064a\u0644 (\u0635\u0644\u0627\u062d\u064a\u0629)\u00bb \u0644\u062a\u0639\u062f\u064a\u0644\u0647.";
     }
   }
   if(ib){
     if(L&&!exLocked){
       ib.style.display="";
-      ib.innerHTML="\u2714 \u0622\u062e\u0631 \u0645\u0633\u062a\u062e\u0644\u0635 \u0645\u064f\u0635\u062f\u0631: \u0631\u0642\u0645 "+L.no+" \u2014 "+L.date+" \u2014 "+fmtUSD(L.grand_usd)+" ("+L.rows.length+" \u0628\u0646\u062f). \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u0645\u0641\u062a\u0648\u062d \u0628\u0635\u0644\u0627\u062d\u064a\u0629.";
+      ib.innerHTML=(certDraft>issuedCerts.length
+        ? "\u270e \u062c\u0627\u0631\u064d \u0625\u0639\u062f\u0627\u062f \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+certDraft+" \u2014 "
+        : "\ud83d\udd13 \u062a\u0639\u062f\u064a\u0644 \u0628\u0635\u0644\u0627\u062d\u064a\u0629 \u0639\u0644\u0649 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+certDraft+" \u2014 ")
+        +"\u0622\u062e\u0631 \u0645\u0633\u062a\u062e\u0644\u0635 \u0645\u064f\u0635\u062f\u0631: \u0631\u0642\u0645 "+L.no+" ("+L.date+") \u0628\u0642\u064a\u0645\u0629 \u062a\u0631\u0627\u0643\u0645\u064a\u0629 "+fmtUSD(L.grand_usd)+".";
     }else{ib.style.display="none";}
   }
+  renderDraftBar();
 }
 
 /* ---------- COST CONTROL ---------- */
@@ -2040,7 +2286,8 @@ function renderCharts(){
 }
 
 // INIT
-initFilters();renderBOQ();renderOverview();renderCosts();loadCVars();initCCFilters();applyExLock();
+initFilters();renderBOQ();renderOverview();renderCosts();loadCVars();initCCFilters();
+syncCertNo();renderCertLog();applyExLock();
 
 // ═══════════════════════════════════════════════════════════
 // SUPABASE SHARED DATABASE SYNC — using official JS client
@@ -2211,6 +2458,7 @@ function buildState(){
   return {
     issued: issuedCerts,
     locked: exLocked,
+    draft: certDraft,
     cc: ccVals,
     cvars: cv,
     ts: new Date().toISOString(),
@@ -2224,6 +2472,8 @@ function applyState(st){
   try{
     if(st.issued) issuedCerts = st.issued;
     if(typeof st.locked === "boolean") exLocked = st.locked;
+    if(typeof st.draft === "number" && st.draft>0) certDraft = st.draft;
+    else if(st.issued) certDraft = st.issued.length || 1;
     if(st.cc) ccVals = st.cc;
     saveIssued(); saveCC();
     if(st.cvars){
@@ -2321,6 +2571,8 @@ function refreshAll(){
       else if(id==="overview")renderOverview();
       else if(id==="charts")renderCharts();
     }
+    syncCertNo();
+    renderCertLog();
     applyExLock();
   }catch(e){console.warn(e);}
 }
