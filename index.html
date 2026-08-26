@@ -102,6 +102,10 @@ label.pl{font-size:10px;color:var(--muted);font-weight:600;display:block;margin-
 .pi:focus{border-color:var(--blue);background:#F7FBFF}
 .pay-before td{background:#EAF5EF}
 .pay-after td{background:#FDF6E3}
+td.cqty-c{color:var(--muted)}
+td.cqty-c.over{background:#FBE3E3!important;color:#7D1C1C!important;font-weight:700;border-inline-start:3px solid #C0392B}
+.over-badge{display:inline-block;background:#C0392B;color:#fff;border-radius:8px;padding:0 5px;font-size:9.5px;font-weight:700;margin-inline-start:3px;vertical-align:middle}
+tr.over-row td.desc-c{color:#7D1C1C}
 .total-row td{font-weight:700;background:#EEF4FF;color:var(--navy)}
 .costs-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px}
 .cost-kpi{background:#fff;border-radius:8px;padding:13px 15px;border:1px solid var(--bd);border-top:3px solid var(--cl,var(--gold))}
@@ -346,10 +350,12 @@ label.pl{font-size:10px;color:var(--muted);font-weight:600;display:block;margin-
       <button class="btn" onclick="issueCertificate()" id="btn-issue" style="background:#1E6F50;color:#fff;border-color:#1E6F50">&#x2714; &#x625;&#x635;&#x62F;&#x627;&#x631; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;</button>
       <button class="btn" onclick="newCertificate()" id="btn-newcert" style="background:#185EA5;color:#fff;border-color:#185EA5;display:none">&#x2795; &#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x62C;&#x62F;&#x64A;&#x62F;</button>
       <button class="btn" onclick="unlockExtract()" id="btn-unlock" style="background:#7D5A00;color:#fff;border-color:#7D5A00;display:none">&#x1F513; &#x641;&#x62A;&#x62D; &#x627;&#x644;&#x62A;&#x639;&#x62F;&#x64A;&#x644; (&#x635;&#x644;&#x627;&#x62D;&#x64A;&#x629;)</button>
+      <button class="btn" onclick="filterOverOnly()" id="btn-overfilter">&#x26A0; &#x627;&#x644;&#x645;&#x62A;&#x62C;&#x627;&#x648;&#x632; &#x641;&#x642;&#x637;</button>
       <button class="btn" onclick="resetPrevAll()" id="btn-resetprev" style="background:#7D5A00;color:#fff;border-color:#7D5A00">&#x21BA; &#x62A;&#x635;&#x641;&#x64A;&#x631; &#x627;&#x644;&#x633;&#x627;&#x628;&#x642; (&#x635;&#x644;&#x627;&#x62D;&#x64A;&#x629;)</button>
       <button class="btn" onclick="clearAll()" id="btn-clear">&#x1F5D1; Clear All</button>
       <span style="font-size:11px;color:var(--muted)" id="ex-count"></span>
     </div>
+    <div id="ex-over-bar" dir="rtl" style="display:none;background:#FBE3E3;border:1px solid #E9B8B8;border-right:4px solid #C0392B;border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:12.5px;color:#7D1C1C;font-weight:600"></div>
     <div id="ex-warn" dir="rtl" style="display:none;background:#FDF6E3;border:1px solid #E6D3A3;border-right:4px solid #C9A84C;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12.5px;color:#7D5A00;font-weight:600"></div>
     <div id="ex-draft-bar" dir="rtl" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#EEF4FF;border:1px solid #BBD3F0;border-right:4px solid #185EA5;border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:12.5px;color:#1F3864;font-weight:600"></div>
     <div class="info-box" id="lbl-info">Enter current quantities and percentages &mdash; data saves automatically</div>
@@ -1714,11 +1720,65 @@ function printCertificate(){
   if(di){ var d=new Date(); di.value=d.toISOString().substring(0,10); }
 })();
 
+/* \u062a\u062c\u0627\u0648\u0632 \u0643\u0645\u064a\u0629 \u0627\u0644\u0639\u0642\u062f */
+function overTitle(d,tq){
+  if(tq>d.qty){
+    var diff=round6(tq-d.qty);
+    var pctOver=d.qty>0?((diff/d.qty)*100).toFixed(1):"\u221e";
+    return "\u26a0 \u062a\u062c\u0627\u0648\u0632 \u0643\u0645\u064a\u0629 \u0627\u0644\u0639\u0642\u062f \u0628\u0645\u0642\u062f\u0627\u0631 "+diff+" "+d.unit+" ("+pctOver+"%) \u2014 \u0627\u0644\u0645\u0646\u0641\u0630 "+round6(tq)+" \u0645\u0642\u0627\u0628\u0644 "+d.qty+" \u0628\u0627\u0644\u0639\u0642\u062f";
+  }
+  return "\u0643\u0645\u064a\u0629 \u0627\u0644\u0639\u0642\u062f: "+d.qty+" "+d.unit;
+}
+/* \u062a\u062d\u062f\u064a\u062b \u062e\u0644\u064a\u0629 \u0643\u0645\u064a\u0629 \u0627\u0644\u0639\u0642\u062f \u0644\u062d\u0638\u064a\u064b\u0627 */
+function refreshOverCell(d){
+  var el=g("cqty-"+d.id); if(!el)return;
+  var tq=rowTotals(d).tq;
+  var isOver=tq>d.qty;
+  el.className="num cqty-c"+(isOver?" over":"");
+  el.title=overTitle(d,tq);
+  el.innerHTML=d.qty.toLocaleString("en-US")+(isOver?' <span class="over-badge">+'+round6(tq-d.qty).toLocaleString("en-US")+'</span>':'');
+  var tr=g("exr-"+d.id);
+  if(tr){ if(isOver)tr.classList.add("over-row"); else tr.classList.remove("over-row"); }
+  updateOverBanner();
+}
+/* \u0634\u0631\u064a\u0637 \u0645\u0644\u062e\u0635 \u0627\u0644\u0628\u0646\u0648\u062f \u0627\u0644\u0645\u062a\u062c\u0627\u0648\u0632\u0629 */
+function updateOverBanner(){
+  var bn=g("ex-over-bar"); if(!bn)return;
+  var over=exData.filter(function(d){return rowTotals(d).tq>d.qty;});
+  if(!over.length){bn.style.display="none";return;}
+  bn.style.display="";
+  var extra=over.reduce(function(s,d){
+    return s+(rowTotals(d).tq-d.qty)*d.unit_price;
+  },0);
+  bn.innerHTML='\u26a0 <b>'+over.length+'</b> \u0628\u0646\u062f \u062a\u062c\u0627\u0648\u0632 \u0643\u0645\u064a\u0629 \u0627\u0644\u0639\u0642\u062f '+
+    '<span style="opacity:.7">(\u0642\u064a\u0645\u0629 \u0627\u0644\u0632\u064a\u0627\u062f\u0629 \u0628\u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u0639\u0642\u062f \u2248 '+fmtUSD(extra)+')</span> '+
+    '<button class="btn" style="padding:2px 9px;font-size:11px;margin-inline-start:8px" onclick="filterOverOnly()">\u0639\u0631\u0636 \u0627\u0644\u0645\u062a\u062c\u0627\u0648\u0632 \u0641\u0642\u0637</button>'+
+    '<button class="btn" style="padding:2px 9px;font-size:11px;margin-inline-start:5px" onclick="exportOverCSV()">\u2b07 CSV</button>';
+}
+/* \u0641\u0644\u062a\u0631\u0629 \u0639\u0631\u0636 \u0627\u0644\u0628\u0646\u0648\u062f \u0627\u0644\u0645\u062a\u062c\u0627\u0648\u0632\u0629 \u0641\u0642\u0637 */
+var overOnly=false;
+function filterOverOnly(){
+  overOnly=!overOnly;
+  renderExtract();
+}
+function exportOverCSV(){
+  var over=exData.filter(function(d){return rowTotals(d).tq>d.qty;});
+  var out=["\uFEFFCode,Description,Unit,ContractQty,ExecutedQty,Excess,UnitPrice,ExcessValueUSD"];
+  over.forEach(function(d){
+    var tq=rowTotals(d).tq,ex=round6(tq-d.qty);
+    out.push([d.code,'"'+(d.desc||"").replace(/"/g,'""')+'"',d.unit,d.qty,round6(tq),ex,d.unit_price,(ex*d.unit_price).toFixed(2)].join(","));
+  });
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([out.join("\n")],{type:"text/csv;charset=utf-8"}));
+  a.download="Over_Contract_Qty.csv";a.click();
+}
+
 function renderExtract(){
   initFilters();
   var sec=g("ex-section").value;
   var q=(g("ex-search").value||"").trim().toLowerCase();
   var rows=exData.filter(function(d){
+    if(overOnly && !(rowTotals(d).tq>d.qty)) return false;
     return(!sec||d.section===sec)&&(!q||(d.desc.toLowerCase().indexOf(q)>=0||d.code.toLowerCase().indexOf(q)>=0));
   });
   setText("ex-count",rows.length+(isRTL?"\u0628\u0646\u062f":" items"));
@@ -1729,11 +1789,12 @@ function renderExtract(){
     var hasCurr=(+(d.curr_qty||0))>0||(+(d.curr_pct||0))>0;
     var cq = d.curr_qty||0;
     var cp = d.curr_pct||0;
-    var row = '<tr'+(hasCurr?' class="upd-row"':'')+' id="exr-'+d.id+'">';
+    var isOver=tq>d.qty;
+    var row = '<tr class="'+(hasCurr?'upd-row ':'')+(isOver?'over-row':'')+'" id="exr-'+d.id+'">';
     row += '<td class="code-c">'+d.code+'</td>';
     row += '<td class="desc-c" title="'+esc(d.desc)+'">'+d.desc+'</td>';
     row += '<td class="unit-c">'+d.unit+'</td>';
-    row += '<td class="num" style="font-size:11px;color:var(--muted)">'+d.qty.toLocaleString("en-US")+'</td>';
+    row += '<td class="num cqty-c'+(tq>d.qty?" over":"")+'" id="cqty-'+d.id+'" style="font-size:11px" title="'+overTitle(d,tq)+'">'+d.qty.toLocaleString("en-US")+(tq>d.qty?' <span class="over-badge">+'+round6(tq-d.qty).toLocaleString("en-US")+'</span>':'')+'</td>';
     row += '<td class="num" style="font-size:11px">$'+d.unit_price.toLocaleString("en-US")+'</td>';
     row += '<td class="td-qp num" ondblclick="editPrev('+d.id+',0)" style="cursor:pointer" title="\u062f\u0628\u0644 \u0643\u0644\u064a\u0643 \u0644\u0644\u062a\u0639\u062f\u064a\u0644 (\u0635\u0644\u0627\u062d\u064a\u0629)">'+(d.prev_qty||0).toLocaleString("en-US")+'</td>';
     row += '<td class="td-qc num" id="cq-'+d.id+'" style="'+(cq?'font-weight:700':'color:#bbb')+'">'+(cq?cq.toLocaleString("en-US"):"\u2014")+'</td>';
@@ -1757,6 +1818,9 @@ function renderExtract(){
   updateSummary();
   applyExLock();
   renderDraftBar();
+  updateOverBanner();
+  var fb=g("btn-overfilter");
+  if(fb){fb.style.background=overOnly?"#C0392B":"";fb.style.color=overOnly?"#fff":"";fb.style.borderColor=overOnly?"#C0392B":"";}
 }
 
 function round6(n){return Math.round((+n||0)*1e6)/1e6;}
@@ -1827,7 +1891,8 @@ function updRow(id,field,val,commit){
   if(cqEl){cqEl.textContent=cq?cq.toLocaleString("en-US"):"\u2014";cqEl.style.fontWeight=cq?"700":"";cqEl.style.color=cq?"":"#bbb";}
   if(cpEl){cpEl.textContent=cp?cp.toFixed(1)+"%":"\u2014";cpEl.style.fontWeight=cp?"700":"";cpEl.style.color=cp?"":"#bbb";}
   if(twEl)twEl.textContent=works>0?fmtUSD(works):"\u2014";
-  if(tr)tr.className=(cq>0||cp>0)?"upd-row":"";
+  if(tr)tr.className=((cq>0||cp>0)?"upd-row ":"")+((t.tq>item.qty)?"over-row":"");
+  refreshOverCell(item);
   var sec=g("ex-section").value;var q=(g("ex-search").value||"").trim().toLowerCase();
   updateGrand(exData.filter(function(d){return(!sec||d.section===sec)&&(!q||(d.desc.toLowerCase().indexOf(q)>=0||d.code.toLowerCase().indexOf(q)>=0));}));
   updateSummary();
