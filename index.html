@@ -406,17 +406,10 @@ tr.over-row td.desc-c{color:#7D1C1C}
 
   <!-- ── SUB-PANE: CERTIFICATE SUMMARY ── -->
   <div id="expane-summary" style="display:none">
-    <div class="no-print" style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
-      <label for="pc-pick" style="font-size:11px;color:var(--muted);font-weight:700">&#x1F4C4; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;</label>
-      <select id="pc-pick" onchange="pickCert(this.value)"
-        style="font-size:12.5px;padding:6px 10px;border:1px solid var(--bd);border-radius:6px;height:34px;font-weight:600;color:var(--navy);min-width:260px;background:#fff;cursor:pointer">
-        <option value="live">&#x270E; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x627;&#x644;&#x62C;&#x627;&#x631;&#x64A;</option>
-      </select>
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
       <button class="btn btn-primary" onclick="printCertificate()" style="gap:5px">&#x1F5A8; Print Certificate</button>
       <span style="font-size:11px;color:var(--muted)">Preview of the payment certificate</span>
     </div>
-    <div id="pc-hist-bar" class="no-print" dir="rtl"
-      style="display:none;background:#EAF5EF;border:1px solid #A9CFBC;border-right:4px solid #1E6F50;border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:12.5px;color:#14573C;font-weight:600"></div>
 
     <!-- Print area -->
     <div id="print-area" style="background:#fff;border:1px solid var(--bd);border-radius:10px;padding:32px;max-width:820px;margin:0 auto;font-family:'Segoe UI',Arial,sans-serif">
@@ -430,7 +423,6 @@ tr.over-row td.desc-c{color:#7D1C1C}
         <div style="text-align:right">
           <div style="font-size:11px;color:#6C757D">Certificate No.</div>
           <div style="font-size:20px;font-weight:700;color:#C9A84C">#<span id="pc-num">001</span></div>
-          <div><span id="pc-status-badge" style="display:inline-block;margin-top:4px;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:.4px;border:1px solid #E6D3A3;background:#FDF6E3;color:#7D5A00">DRAFT</span></div>
         </div>
       </div>
 
@@ -454,11 +446,11 @@ tr.over-row td.desc-c{color:#7D1C1C}
         </div>
         <div style="padding:10px 14px;border-right:1px solid #E0E0E0">
           <div style="color:#6C757D;font-size:10px;font-weight:600;margin-bottom:2px">CERTIFICATE DATE</div>
-          <div><input type="date" id="pc-date" style="font-size:12px;border:none;outline:none;font-family:inherit;color:#1A1A1A;font-weight:600;cursor:pointer" oninput="updateSummary();renderPayments()"><span id="pc-date-hist" style="display:none;font-size:12px;font-weight:600;color:#1A1A1A"></span></div>
+          <div><input type="date" id="pc-date" style="font-size:12px;border:none;outline:none;font-family:inherit;color:#1A1A1A;font-weight:600;cursor:pointer" onchange="onCertDateChange()"></div>
         </div>
         <div style="padding:10px 14px">
           <div style="color:#6C757D;font-size:10px;font-weight:600;margin-bottom:2px">CERTIFICATE No.</div>
-          <div><input type="number" id="pc-num-inp" value="1" min="1" readonly title="&#x631;&#x642;&#x645; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x62A;&#x644;&#x642;&#x627;&#x626;&#x64A; &#x2014; &#x64A;&#x632;&#x64A;&#x62F; &#x639;&#x646;&#x62F; &#x641;&#x62A;&#x62D; &#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x62C;&#x62F;&#x64A;&#x62F;" style="font-size:13px;border:none;outline:none;font-family:inherit;color:#C9A84C;font-weight:700;width:60px;background:transparent;cursor:default"><span id="pc-num-hist" style="display:none;font-size:13px;font-weight:700;color:#C9A84C"></span></div>
+          <div><input type="number" id="pc-num-inp" value="1" min="1" readonly title="&#x631;&#x642;&#x645; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x62A;&#x644;&#x642;&#x627;&#x626;&#x64A; &#x2014; &#x64A;&#x632;&#x64A;&#x62F; &#x639;&#x646;&#x62F; &#x641;&#x62A;&#x62D; &#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x62C;&#x62F;&#x64A;&#x62F;" style="font-size:13px;border:none;outline:none;font-family:inherit;color:#C9A84C;font-weight:700;width:60px;background:transparent;cursor:default"></div>
         </div>
       </div>
 
@@ -615,6 +607,7 @@ tr.over-row td.desc-c{color:#7D1C1C}
             <th class="num">&#x627;&#x644;&#x62A;&#x631;&#x627;&#x643;&#x645;&#x64A; ($)</th>
             <th style="text-align:center">&#x627;&#x644;&#x628;&#x64A;&#x627;&#x646;</th>
             <th style="text-align:center">&#x627;&#x644;&#x62D;&#x627;&#x644;&#x629;</th>
+            <th style="text-align:center">&#x645;&#x642;&#x627;&#x628;&#x644;</th>
             <th style="text-align:center">&#x62D;&#x630;&#x641;</th>
           </tr>
         </thead>
@@ -623,7 +616,7 @@ tr.over-row td.desc-c{color:#7D1C1C}
           <tr class="total-row">
             <td colspan="6" style="padding:9px 10px">&#x625;&#x62C;&#x645;&#x627;&#x644;&#x64A; &#x627;&#x644;&#x645;&#x62D;&#x635;&#x644;</td>
             <td class="num td-w" id="pay-grand" style="font-size:14px">$0</td>
-            <td colspan="4"></td>
+            <td colspan="5"></td>
           </tr>
         </tfoot>
       </table>
@@ -1148,6 +1141,10 @@ function payUSD(p){
 }
 /* \u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0627\u0644\u062c\u0627\u0631\u064a */
 function certDate(){
+  for(var i=0;i<issuedCerts.length;i++){
+    if(issuedCerts[i].no===certDraft && issuedCerts[i].date) return issuedCerts[i].date;
+  }
+  if(certDraftDate) return certDraftDate;
   var d=g("pc-date");
   return (d&&d.value)?d.value:new Date().toISOString().slice(0,10);
 }
@@ -1156,6 +1153,16 @@ function paymentsBefore(dateStr){
   return payments.reduce(function(s,p){
     return s+((p.date && dateStr && p.date < dateStr)?payUSD(p):0);
   },0);
+}
+/* الدفعة تخص آخر مستخلص صدر في/قبل تاريخها،
+   وتظهر كـ«دفعات سابقة» في المستخلص الذي يليه */
+function certOfPayment(p){
+  var best=null;
+  for(var i=0;i<issuedCerts.length;i++){
+    var c=issuedCerts[i];
+    if(c.date && p.date && c.date<=p.date){ if(!best||c.no>best.no) best=c; }
+  }
+  return best;
 }
 function paymentsTotal(){
   return payments.reduce(function(s,p){return s+payUSD(p);},0);
@@ -1289,7 +1296,7 @@ function renderPayments(){
   }
 
   if(!payments.length){
-    b.innerHTML='<tr><td colspan="11" style="padding:14px;text-align:center;color:#aaa;font-style:italic">\u0644\u0627 \u062a\u0648\u062c\u062f \u062f\u0641\u0639\u0627\u062a \u0645\u0633\u062c\u0644\u0629 \u0628\u0639\u062f</td></tr>';
+    b.innerHTML='<tr><td colspan="12" style="padding:14px;text-align:center;color:#aaa;font-style:italic">\u0644\u0627 \u062a\u0648\u062c\u062f \u062f\u0641\u0639\u0627\u062a \u0645\u0633\u062c\u0644\u0629 \u0628\u0639\u062f</td></tr>';
     setText("pay-grand","$0");
     return;
   }
@@ -1298,6 +1305,7 @@ function renderPayments(){
     var u=payUSD(p);
     run+=u;
     var isBefore=p.date && p.date<cd;
+    var cOf=certOfPayment(p);
     return '<tr class="r-item '+(isBefore?"pay-before":"pay-after")+'">'+
       '<td style="text-align:center;font-size:11.5px">'+esc(p.date)+'</td>'+
       '<td style="text-align:center;font-family:monospace;font-size:11.5px">'+(esc(p.ref)||"\u2014")+'</td>'+
@@ -1308,8 +1316,10 @@ function renderPayments(){
       '<td class="num td-w">'+fmtUSD(u)+'</td>'+
       '<td class="num" style="font-size:11.5px;color:var(--navy)">'+fmtUSD(run)+'</td>'+
       '<td style="text-align:center;font-size:11px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(p.note)+'">'+(esc(p.note)||"\u2014")+'</td>'+
-      '<td style="text-align:center"><span style="background:'+(isBefore?"#EAF5EF":"#FDF6E3")+';color:'+(isBefore?"#14573C":"#7D5A00")+';padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600">'+
-        (isBefore?"\u0633\u0627\u0628\u0642\u0629":"\u062d\u0627\u0644\u064a\u0629/\u0644\u0627\u062d\u0642\u0629")+'</span></td>'+
+      '<td style="text-align:center"><span style="background:'+(isBefore?"#EAF5EF":"#FDF6E3")+';color:'+(isBefore?"#14573C":"#7D5A00")+';padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600" title="'+
+        (isBefore?"\u062a\u064f\u062e\u0635\u0645 \u0645\u0646 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+certDraft:"\u062a\u064f\u062e\u0635\u0645 \u0645\u0646 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0627\u0644\u062a\u0627\u0644\u064a")+'">'+
+        (isBefore?"\u0633\u0627\u0628\u0642\u0629 \u2192 #"+certDraft:"\u0644\u0627\u062d\u0642\u0629 \u2192 #"+(certDraft+1))+'</span></td>'+
+      '<td style="text-align:center;font-size:11px;color:var(--muted)">'+(cOf?("\u0645\u0642\u0627\u0628\u0644 #"+cOf.no):"\u0642\u0628\u0644 \u0623\u0648\u0644 \u0645\u0633\u062a\u062e\u0644\u0635")+'</td>'+
       '<td style="text-align:center"><button class="btn" style="padding:2px 7px;font-size:11px;background:#7D1C1C;color:#fff;border-color:#7D1C1C" onclick="deletePayment(\''+p.id+'\')">\ud83d\uddd1</button></td>'+
       '</tr>';
   }).join("");
@@ -1343,7 +1353,7 @@ function switchExTab(id){
     b.style.borderBottom= active ? '3px solid var(--navy)' : '3px solid transparent';
     b.style.fontWeight  = active ? '700' : '600';
   });
-  if(id==='summary'){ fillCertPicker(); updateSummary(); }
+  if(id==='summary') updateSummary();
   if(id==='log') renderCertLog();
   if(id==='pay') renderPayments();
 }
@@ -1356,92 +1366,42 @@ function calcWorksTotal(){
   },0);
 }
 
-/* =======================================================================
-   اختيار المستخلص المعروض في تبويب Certificate Summary
-   pcView = 'live'  →  المستخلص الجاري (من بيانات الإدخال الحالية)
-   pcView = رقم     →  لقطة مستخلص مُصدر محفوظة في issuedCerts
-   ======================================================================= */
-var pcView = 'live';
-
-function certByNo(no){
-  no = +no;
-  for(var i=0;i<issuedCerts.length;i++){ if(issuedCerts[i].no===no) return issuedCerts[i]; }
-  return null;
-}
-
-function fillCertPicker(){
-  var sel = g('pc-pick'); if(!sel) return;
-  if(pcView!=='live' && !certByNo(pcView)) pcView='live';
-  var html = '<option value="live">\u270e \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0627\u0644\u062c\u0627\u0631\u064a \u2014 #'+certDraft+'</option>';
-  for(var i=issuedCerts.length-1;i>=0;i--){
-    var c=issuedCerts[i];
-    var cur=(typeof c.curr_usd==='number')?c.curr_usd:c.grand_usd;
-    html += '<option value="'+c.no+'">\ud83d\udd12 \u0645\u0633\u062a\u062e\u0644\u0635 \u0645\u064f\u0635\u062f\u0631 \u0631\u0642\u0645 '+c.no+' \u2014 '+(c.date||'-')+' \u2014 '+fmtUSD(cur)+'</option>';
-  }
-  sel.innerHTML = html;
-  sel.value = (pcView==='live') ? 'live' : String(pcView);
-}
-
-function pickCert(v){
-  pcView = (v==='live'||v==null) ? 'live' : (+v);
-  var sel=g('pc-pick'); if(sel) sel.value=(pcView==='live')?'live':String(pcView);
-  updateSummary();
-}
-
-/* طباعة مستخلص مُصدر مباشرةً من سجل المستخلصات */
-function printCertNo(no){
-  pcView = +no;
-  switchExTab('summary');
-  document.querySelectorAll('.ex-stab').forEach(function(b){
-    var active = b.id === 'exstab-summary';
-    b.style.color = active ? 'var(--navy)' : 'var(--muted)';
-    b.style.borderBottom = active ? '3px solid var(--navy)' : '3px solid transparent';
-  });
-  setTimeout(printCertificate, 150);
-}
-
-/* تبديل واجهة الملخص بين «جاري» و«مُصدر» */
-function setPcMode(hist, rec){
-  var di=g('pc-date'), ds=g('pc-date-hist'),
-      ni=g('pc-num-inp'), ns=g('pc-num-hist'),
-      bar=g('pc-hist-bar'), bd=g('pc-status-badge');
-  if(hist && rec){
-    if(di) di.style.display='none';
-    if(ds){ ds.style.display=''; ds.textContent = rec.date || '-'; }
-    if(ni) ni.style.display='none';
-    if(ns){ ns.style.display=''; ns.textContent = '#'+rec.no; }
-    if(bd){ bd.style.display=''; bd.textContent='ISSUED'; bd.style.background='#EAF5EF'; bd.style.color='#14573C'; bd.style.borderColor='#A9CFBC'; }
-    if(bar){
-      bar.style.display='';
-      bar.innerHTML='\ud83d\udd12 \u0639\u0631\u0636 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0627\u0644\u0645\u064f\u0635\u062f\u0631 \u0631\u0642\u0645 <b>'+rec.no+'</b> '+
-        '\u0628\u062a\u0627\u0631\u064a\u062e '+(rec.date||'-')+' \u2014 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0645\u062d\u0641\u0648\u0638\u0629 \u0648\u0642\u062a \u0627\u0644\u0625\u0635\u062f\u0627\u0631 \u0648\u0644\u0627 \u062a\u062a\u0623\u062b\u0631 \u0628\u0623\u064a \u062a\u0639\u062f\u064a\u0644 \u062d\u0627\u0644\u064a.'+
-        '<button class="btn" style="padding:2px 9px;font-size:11px;margin-inline-start:8px" onclick="pickCert(\'live\')">\u21a9 \u0627\u0644\u0639\u0648\u062f\u0629 \u0644\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0627\u0644\u062c\u0627\u0631\u064a</button>';
+function updateSummary(){
+  /* \u0627\u0644\u0631\u0628\u0637 \u0627\u0644\u062a\u0644\u0642\u0627\u0626\u064a: \u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0645\u062d\u0635\u0644\u0629 \u0642\u0628\u0644 \u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 = \u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0633\u0627\u0628\u0642\u0629 */
+  if(payAuto){
+    var pin=g('cv-prev');
+    if(pin){
+      var auto=paymentsBefore(certDate());
+      var cur=parseFloat(pin.value)||0;
+      if(Math.abs(cur-auto)>0.005) pin.value=auto.toFixed(2);
     }
-  } else {
-    if(di) di.style.display='';
-    if(ds) ds.style.display='none';
-    if(ni) ni.style.display='';
-    if(ns) ns.style.display='none';
-    if(bar) bar.style.display='none';
-    if(bd){
-      bd.style.display='';
-      var lock = (typeof exLocked!=='undefined') && exLocked;
-      bd.textContent = lock ? 'ISSUED' : 'DRAFT';
-      bd.style.background = lock ? '#EAF5EF' : '#FDF6E3';
-      bd.style.color      = lock ? '#14573C' : '#7D5A00';
-      bd.style.borderColor= lock ? '#A9CFBC' : '#E6D3A3';
-    }
-    try{ syncCertNo(); }catch(e){}
   }
-}
+  saveCVars();
+  var cv = getCV();
+  var worksTotal = calcWorksTotal();
 
-/* رسم جدول الأقسام + الملخص المالي (مشترك بين الجاري والمُصدر) */
-function paintCert(cv, worksTotal, secs, secMap, prevLbl){
+  // Contract value display
   setText('pc-contract-val', cv.contract>0 ? fmtUSD(cv.contract) : fmtUSD(worksTotal)+' (from BOQ)');
+
+  // Works by section
+  var secs = [];
+  var secMap = {};
+  exData.forEach(function(d){
+    var tq=(+(d.prev_qty||0))+(+(d.curr_qty||0));
+    var tp=Math.min((+(d.prev_pct||0))+(+(d.curr_pct||0)),100);
+    var w=d.unit_price*tq*(tp/100);
+    if(w>0){
+      if(!secMap[d.section]){secMap[d.section]=0;secs.push(d.section);}
+      secMap[d.section]+=w;
+    }
+  });
 
   // Group 5 MEP sections into one MEP WORKS row
   var MEP_SECS = ['HVAC WORKS','FIRE FIGHTING WORKS','PLUMBING WORKS','IRRIGATION WORKS','SWIMMING POOL WORKS'];
-  var displaySecs = [], displayMap = {}, mepTotal = 0, mepInserted = false;
+  var displaySecs = [];
+  var displayMap = {};
+  var mepTotal = 0;
+  var mepInserted = false;
   secs.forEach(function(s){
     if(MEP_SECS.indexOf(s) >= 0){
       mepTotal += secMap[s] || 0;
@@ -1473,10 +1433,18 @@ function paintCert(cv, worksTotal, secs, secMap, prevLbl){
   // Financial calculations
   var vatAmt  = worksTotal * (cv.vat/100);
   var siAmt   = worksTotal * (cv.si/100);
+  // Advance payment deduction = advance × (worksTotal / contractValue)
   var advDed  = cv.contract>0 ? cv.advance*(worksTotal/cv.contract) : cv.advance;
   var retAmt  = worksTotal * (cv.ret/100);
   var prevAmt = cv.prev;
+
   var due = worksTotal + vatAmt + siAmt - advDed - retAmt - prevAmt;
+
+  var prevLbl='Previous Payments Collected ($)';
+  if(payAuto){
+    var nBefore=payments.filter(function(p){return p.date && p.date < certDate();}).length;
+    prevLbl+=' &mdash; <span style="font-size:10.5px;color:#1E6F50">'+nBefore+' payment(s) before '+certDate()+'</span>';
+  }
 
   var rows = [
     {label:'Total Certified Works',  val:worksTotal, sign:'',  bold:false, bg:'#F8F9FA'},
@@ -1499,101 +1467,12 @@ function paintCert(cv, worksTotal, secs, secMap, prevLbl){
   }
 
   setText('pc-due', fmtUSD(due));
-}
 
-/* تذييل جدول BOQ Detail (يبقى دائمًا على البيانات الحالية) */
-function updateBoqFoot(){
-  var worksTotal = calcWorksTotal();
+  // Also update the BOQ grand total
   setText('ex-grand', worksTotal>0?fmtUSD(worksTotal):'$0');
   var prevW=exData.reduce(function(s,d){return s+prevWorksOf(d);},0);
   setText('ex-prevworks', prevW>0?fmtUSD(prevW):'$0');
   setText('ex-currworks', (worksTotal-prevW)>0?fmtUSD(worksTotal-prevW):'$0');
-}
-
-/* عرض لقطة مستخلص مُصدر */
-function renderCertView(rec){
-  setPcMode(true, rec);
-  setText('pc-num', String(rec.no));
-
-  var cvs = rec.cvars || {};
-  var hasSnap = false;
-  for(var k in cvs){ if(cvs.hasOwnProperty(k) && cvs[k]!=='' && cvs[k]!=null){ hasSnap=true; break; } }
-  if(!hasSnap){ try{ cvs = {}; ['cv-contract','cv-vat','cv-si','cv-advance','cv-ret','cv-prev'].forEach(function(id){ var el=g(id); if(el) cvs[id]=el.value; }); }catch(e){} }
-  function snapNum(id){
-    var v = cvs[id];
-    if(v===undefined || v===null || v==='') return 0;
-    return parseFloat(String(v).replace(/,/g,'')) || 0;
-  }
-  var cv = {
-    contract : snapNum('cv-contract'),
-    vat      : snapNum('cv-vat'),
-    si       : snapNum('cv-si'),
-    advance  : snapNum('cv-advance'),
-    ret      : snapNum('cv-ret'),
-    prev     : snapNum('cv-prev')
-  };
-
-  var snapRows = rec.rows || [];
-  var worksTotal = (typeof rec.grand_usd==='number')
-    ? rec.grand_usd
-    : snapRows.reduce(function(s,r){return s+(r.works_usd||0);},0);
-
-  var secs=[], secMap={};
-  snapRows.forEach(function(r){
-    var w = r.works_usd || 0;
-    if(w>0){
-      if(!secMap[r.section]){ secMap[r.section]=0; secs.push(r.section); }
-      secMap[r.section]+=w;
-    }
-  });
-
-  paintCert(cv, worksTotal, secs, secMap, 'Previous Payments Collected ($)');
-}
-
-function updateSummary(){
-  /* لو المعروض مستخلص مُصدر → اعرض اللقطة المحفوظة فقط */
-  if(pcView!=='live'){
-    var rec = certByNo(pcView);
-    if(rec){ renderCertView(rec); updateBoqFoot(); return; }
-    pcView='live';
-    var s0=g('pc-pick'); if(s0) s0.value='live';
-  }
-  setPcMode(false, null);
-
-  /* \u0627\u0644\u0631\u0628\u0637 \u0627\u0644\u062a\u0644\u0642\u0627\u0626\u064a: \u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0645\u062d\u0635\u0644\u0629 \u0642\u0628\u0644 \u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 = \u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0633\u0627\u0628\u0642\u0629 */
-  if(payAuto){
-    var pin=g('cv-prev');
-    if(pin){
-      var auto=paymentsBefore(certDate());
-      var cur=parseFloat(pin.value)||0;
-      if(Math.abs(cur-auto)>0.005) pin.value=auto.toFixed(2);
-    }
-  }
-  saveCVars();
-  var cv = getCV();
-  var worksTotal = calcWorksTotal();
-
-  // Works by section
-  var secs = [];
-  var secMap = {};
-  exData.forEach(function(d){
-    var tq=(+(d.prev_qty||0))+(+(d.curr_qty||0));
-    var tp=Math.min((+(d.prev_pct||0))+(+(d.curr_pct||0)),100);
-    var w=d.unit_price*tq*(tp/100);
-    if(w>0){
-      if(!secMap[d.section]){secMap[d.section]=0;secs.push(d.section);}
-      secMap[d.section]+=w;
-    }
-  });
-
-  var prevLbl='Previous Payments Collected ($)';
-  if(payAuto){
-    var nBefore=payments.filter(function(p){return p.date && p.date < certDate();}).length;
-    prevLbl+=' &mdash; <span style="font-size:10.5px;color:#1E6F50">'+nBefore+' payment(s) before '+certDate()+'</span>';
-  }
-
-  paintCert(cv, worksTotal, secs, secMap, prevLbl);
-  updateBoqFoot();
 }
 
 function printBOQDetail(){
@@ -1853,11 +1732,31 @@ function printCertificate(){
   }, 150);
 }
 
-// Set today's date as default
-(function(){
-  var di = g('pc-date');
-  if(di){ var d=new Date(); di.value=d.toISOString().substring(0,10); }
-})();
+// تاريخ المستخلص مثبّت — لا يتغير بتاريخ اليوم
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function applyCertDate(){
+  var di=g('pc-date'); if(!di)return;
+  /* مستخلص مُصدر → تاريخه المحفوظ وقت الإصدار */
+  var rec=null;
+  for(var i=0;i<issuedCerts.length;i++){ if(issuedCerts[i].no===certDraft){ rec=issuedCerts[i]; break; } }
+  if(rec && rec.date) certDraftDate=rec.date;
+  if(!certDraftDate) certDraftDate=todayStr();
+  di.value=certDraftDate;
+  di.readOnly=exLocked;
+  di.disabled=exLocked;
+  di.style.cursor=exLocked?'not-allowed':'pointer';
+  di.title=exLocked
+    ? '\u0627\u0644\u062a\u0627\u0631\u064a\u062e \u0645\u062b\u0628\u0651\u062a \u0628\u0625\u0635\u062f\u0627\u0631 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635'
+    : '\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u2014 \u064a\u064f\u062b\u0628\u0651\u062a \u0639\u0646\u062f \u0627\u0644\u0625\u0635\u062f\u0627\u0631';
+}
+function onCertDateChange(){
+  var di=g('pc-date'); if(!di)return;
+  if(exLocked){ applyCertDate(); return; }
+  certDraftDate=di.value||todayStr();
+  try{ localStorage.setItem('boq_cert_draft_date',certDraftDate); }catch(e){}
+  scheduleStatePush();
+  updateSummary(); renderPayments();
+}
 
 /* \u062a\u062c\u0627\u0648\u0632 \u0643\u0645\u064a\u0629 \u0627\u0644\u0639\u0642\u062f */
 function overTitle(d,tq){
@@ -2150,7 +2049,8 @@ var EGP_RATE    = 51;
 
 var issuedCerts = [];
 var exLocked    = false;
-var certDraft   = 1;      /* \u0631\u0642\u0645 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0627\u0644\u062c\u0627\u0631\u064a \u0625\u0639\u062f\u0627\u062f\u0647 */
+var certDraft   = 1;
+var certDraftDate = "";   /* تاريخ المستخلص الجاري — مثبّت */      /* \u0631\u0642\u0645 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0627\u0644\u062c\u0627\u0631\u064a \u0625\u0639\u062f\u0627\u062f\u0647 */
 var adminMode   = false;  /* \u062c\u0644\u0633\u0629 \u0635\u0644\u0627\u062d\u064a\u0629 \u0623\u062f\u0645\u0646 (\u063a\u064a\u0631 \u0645\u062d\u0641\u0648\u0638\u0629) */
 var activeCostTab = "summary";
 
@@ -2161,6 +2061,7 @@ function loadIssued(){
     exLocked = localStorage.getItem("boq_ex_locked")==="1";
     var cd=parseInt(localStorage.getItem("boq_cert_draft"),10);
     certDraft = (cd&&cd>0)?cd:(issuedCerts.length||1);
+    certDraftDate = localStorage.getItem("boq_cert_draft_date")||"";
   }catch(e){}
 }
 function saveIssued(){
@@ -2168,6 +2069,7 @@ function saveIssued(){
     localStorage.setItem("boq_issued_v1",JSON.stringify(issuedCerts));
     localStorage.setItem("boq_ex_locked",exLocked?"1":"0");
     localStorage.setItem("boq_cert_draft",String(certDraft));
+    if(certDraftDate) localStorage.setItem("boq_cert_draft_date",certDraftDate);
   }catch(e){}
   scheduleStatePush();
 }
@@ -2231,7 +2133,8 @@ function issueCertificate(){
   try{cvInputs.forEach(function(id){var el=g(id);if(el)cvSnap[id]=el.value;});}catch(e){}
   var rec={
     no:no,
-    date:(g("pc-date")&&g("pc-date").value)?g("pc-date").value:d.toISOString().slice(0,10),
+    date: certDate(),
+    issued_at: d.toISOString(),
     time:d.toTimeString().slice(0,5),
     by:(typeof currentUser!=="undefined"&&currentUser)?currentUser:"-",
     grand_usd:grand,
@@ -2281,7 +2184,9 @@ function newCertificate(){
   exLocked=false;
   adminMode=false;
   var ni=g("pc-num-inp"); if(ni){ni.value=nextNo;setText("pc-num",String(nextNo));}
-  var di=g("pc-date");    if(di){di.value=new Date().toISOString().slice(0,10);}
+  certDraftDate=todayStr();
+  try{ localStorage.setItem("boq_cert_draft_date",certDraftDate); }catch(e){}
+  applyCertDate();
   var pv=g("cv-prev");
   if(pv && !payAuto){
     var netPrev=cumulativeNetOfIssued();
@@ -2350,7 +2255,6 @@ function renderDraftBar(){
 
 /* \u0633\u062c\u0644 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635\u0627\u062a */
 function renderCertLog(){
-  try{ fillCertPicker(); }catch(e){}
   var b=g("cert-log-body"); if(!b)return;
   if(!issuedCerts.length){
     b.innerHTML='<tr><td colspan="8" style="padding:14px;text-align:center;color:#aaa;font-style:italic">\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0633\u062a\u062e\u0644\u0635\u0627\u062a \u0645\u064f\u0635\u062f\u0631\u0629 \u0628\u0639\u062f</td></tr>';
@@ -2370,7 +2274,6 @@ function renderCertLog(){
       '<td style="text-align:center"><span class="badge" style="background:'+(isLast&&!exLocked?'#FDF6E3':'#EAF5EF')+';color:'+(isLast&&!exLocked?'#7D5A00':'#14573C')+';padding:2px 8px;border-radius:10px;font-size:10.5px">'+
         (isLast&&!exLocked?'\u0645\u0641\u062a\u0648\u062d \u0644\u0644\u062a\u0639\u062f\u064a\u0644':'\u0645\u064f\u0635\u062f\u0631 \u0648\u0645\u0642\u0641\u0644')+'</span></td>'+
       '<td style="text-align:center">'+
-        '<button class="btn" style="padding:3px 8px;font-size:11px;background:#1F3864;color:#fff;border-color:#1F3864" onclick="printCertNo('+c.no+')">\ud83d\udda8 \u0637\u0628\u0627\u0639\u0629</button> '+
         '<button class="btn" style="padding:3px 8px;font-size:11px" onclick="exportCertCSV('+c.no+')">\u2b07 CSV</button> '+
         (isLast?'<button class="btn" style="padding:3px 8px;font-size:11px;background:#7D1C1C;color:#fff;border-color:#7D1C1C" onclick="deleteLastCert()">\ud83d\uddd1 \u062d\u0630\u0641</button>':'')+
       '</td></tr>';
@@ -2424,6 +2327,7 @@ function applyExLock(){
     }else{ib.style.display="none";}
   }
   renderDraftBar();
+  applyCertDate();
 }
 
 /* ---------- COST CONTROL ---------- */
@@ -2905,7 +2809,7 @@ function renderCharts(){
 
 // INIT
 initFilters();renderBOQ();renderOverview();renderCosts();loadCVars();initCCFilters();
-syncCertNo();renderCertLog();
+syncCertNo();applyCertDate();renderCertLog();
 (function(){var pd=g("pay-date");if(pd&&!pd.value)pd.value=new Date().toISOString().slice(0,10);})();
 payCurChanged();renderPayments();updateSummary();
 applyExLock();
@@ -3080,6 +2984,7 @@ function buildState(){
     issued: issuedCerts,
     locked: exLocked,
     draft: certDraft,
+    draftDate: certDraftDate,
     payments: payments,
     payAuto: payAuto,
     cc: ccVals,
@@ -3096,6 +3001,7 @@ function applyState(st){
     if(st.issued) issuedCerts = st.issued;
     if(typeof st.locked === "boolean") exLocked = st.locked;
     if(typeof st.draft === "number" && st.draft>0) certDraft = st.draft;
+    if(st.draftDate) certDraftDate = st.draftDate;
     else if(st.issued) certDraft = st.issued.length || 1;
     if(st.cc) ccVals = st.cc;
     if(st.payments) payments = st.payments;
