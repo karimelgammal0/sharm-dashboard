@@ -349,6 +349,8 @@ tr.over-row td.desc-c{color:#7D1C1C}
       </label>
       <button class="btn" onclick="issueCertificate()" id="btn-issue" style="background:#1E6F50;color:#fff;border-color:#1E6F50">&#x2714; &#x625;&#x635;&#x62F;&#x627;&#x631; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;</button>
       <button class="btn" onclick="newCertificate()" id="btn-newcert" style="background:#185EA5;color:#fff;border-color:#185EA5;display:none">&#x2795; &#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x62C;&#x62F;&#x64A;&#x62F;</button>
+      <select id="ex-cert-pick" onchange="reopenCertPick(this.value)" title="&#x627;&#x62E;&#x62A;&#x631; &#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;&#x627;&#x64B; &#x645;&#x64F;&#x635;&#x62F;&#x631;&#x627;&#x64B; &#x644;&#x641;&#x62A;&#x62D;&#x647; &#x644;&#x644;&#x62A;&#x639;&#x62F;&#x64A;&#x644;"
+        style="display:none;font-size:12px;padding:6px 9px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-weight:600;background:#fff;cursor:pointer"></select>
       <button class="btn" onclick="unlockExtract()" id="btn-unlock" style="background:#7D5A00;color:#fff;border-color:#7D5A00;display:none">&#x1F513; &#x641;&#x62A;&#x62D; &#x627;&#x644;&#x62A;&#x639;&#x62F;&#x64A;&#x644; (&#x635;&#x644;&#x627;&#x62D;&#x64A;&#x629;)</button>
       <button class="btn" onclick="filterOverOnly()" id="btn-overfilter">&#x26A0; &#x627;&#x644;&#x645;&#x62A;&#x62C;&#x627;&#x648;&#x632; &#x641;&#x642;&#x637;</button>
       <button class="btn" onclick="resetPrevAll()" id="btn-resetprev" style="background:#7D5A00;color:#fff;border-color:#7D5A00">&#x21BA; &#x62A;&#x635;&#x641;&#x64A;&#x631; &#x627;&#x644;&#x633;&#x627;&#x628;&#x642; (&#x635;&#x644;&#x627;&#x62D;&#x64A;&#x629;)</button>
@@ -2471,10 +2473,16 @@ function reopenCert(no){
   msg+="\nمتابعة؟";
   if(!confirm(msg))return;
 
-  var byId={};
-  (c.rows||[]).forEach(function(r){ byId[r.id]=r; });
+  var byId={},byCode={};
+  (c.rows||[]).forEach(function(r){ byId[r.id]=r; if(r.code) byCode[r.code]=r; });
+  var hits=0;
+  exData.forEach(function(d){ if(byId[d.id]||byCode[d.code]) hits++; });
+  if((c.rows||[]).length && hits===0){
+    alert("⚠ تعذر مطابقة بنود المستخلص رقم "+no+" مع جدول البنود.\nلم يتم تغيير أي شيء حفاظًا على البيانات.");
+    return;
+  }
   exData=exData.map(function(d){
-    var r=byId[d.id];
+    var r=byId[d.id]||byCode[d.code];
     if(r) return Object.assign({},d,{prev_qty:+(r.prev_qty||0),curr_qty:+(r.curr_qty||0),
                                       prev_pct:+(r.prev_pct||0),curr_pct:+(r.curr_pct||0)});
     return Object.assign({},d,{prev_qty:0,curr_qty:0,prev_pct:0,curr_pct:0});
@@ -2491,6 +2499,7 @@ function reopenCert(no){
   saveStorage();pushAllToDB();saveIssued();
   syncCertNo();applyCertDate();renderExtract();renderCertLog();
   switchExTab('detail');
+  renderCertPicker();
   alert("🔓 المستخلص رقم "+no+" مفتوح للتعديل الآن.\nعدّل ثم اضغط «إصدار المستخلص» لحفظه مكانه.");
 }
 
@@ -2577,6 +2586,31 @@ function applyExLock(){
   }
   renderDraftBar();
   applyCertDate();
+  renderCertPicker();
+}
+
+/* قائمة اختيار مستخلص للتعديل — في تبويب BOQ Detail */
+function renderCertPicker(){
+  var sel=g("ex-cert-pick"); if(!sel)return;
+  if(!issuedCerts.length){ sel.style.display="none"; return; }
+  sel.style.display="";
+  var opts='<option value="">✎ تعديل مستخلص…</option>';
+  issuedCerts.slice().sort(function(a,b){return a.no-b.no;}).forEach(function(c){
+    opts+='<option value="'+c.no+'"'+(c.no===certDraft?' selected':'')+'>مستخلص #'+c.no+' — '+(c.date||'')+(c.no===certDraft?' (مفتوح الآن)':'')+'</option>';
+  });
+  if(certDraft>issuedCerts.length){
+    opts+='<option value="'+certDraft+'" selected>المستخلص الجاري #'+certDraft+' (تحت الإعداد)</option>';
+  }
+  sel.innerHTML=opts;
+}
+function reopenCertPick(v){
+  var no=parseInt(v,10);
+  if(!no){ renderCertPicker(); return; }
+  if(no===certDraft && !exLocked){
+    alert("المستخلص رقم "+no+" مفتوح للتعديل بالفعل.");
+    return;
+  }
+  reopenCert(no);
 }
 
 /* ---------- COST CONTROL ---------- */
