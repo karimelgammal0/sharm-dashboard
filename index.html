@@ -1396,6 +1396,15 @@ function summaryCtx(){
     }
     viewCert=0;
   }
+  if(issuedCerts.length && findCert(certDraft)){
+    var lastC=issuedCerts[issuedCerts.length-1];
+    viewCert=lastC.no;
+    return {live:false,no:lastC.no,date:lastC.date||"",rows:lastC.rows||[],
+            cv:cvFromSnap(lastC.cvars),
+            worksTotal:(+lastC.grand_usd||0),
+            prevWorks:(typeof lastC.prev_usd==="number")?lastC.prev_usd:0,
+            by:lastC.by||"-"};
+  }
   return {live:true,no:certDraft,date:certDate(),rows:null,cv:getCV(),
           worksTotal:calcWorksTotal(),
           prevWorks:exData.reduce(function(s,d){return s+prevWorksOf(d);},0),
@@ -1418,11 +1427,11 @@ function stepViewCert(dir){
 function renderCertSelector(ctx){
   var sel=g('cert-view-sel');
   if(sel){
-    var liveLbl;
-    if(exLocked) liveLbl='الحالة الحية — #'+certDraft+' مُصدر ومقفل';
-    else if(findCert(certDraft)) liveLbl='الحالة الحية — تعديل على #'+certDraft;
-    else liveLbl='المستخلص الجاري #'+certDraft+' — تحت الإعداد';
-    var opts='<option value="0">'+liveLbl+'</option>';
+    /* خيار «جارٍ» يظهر فقط لمستخلص لم يُصدر بعد */
+    var opts='';
+    if(!findCert(certDraft)){
+      opts+='<option value="0">المستخلص الجاري #'+certDraft+' — تحت الإعداد</option>';
+    }
     issuedCerts.slice().sort(function(a,b){return b.no-a.no;}).forEach(function(c){
       opts+='<option value="'+c.no+'">مستخلص #'+c.no+' — '+(c.date||'')+' — '+fmtUSD(c.curr_usd!==undefined?c.curr_usd:c.grand_usd)+'</option>';
     });
@@ -1558,10 +1567,12 @@ function updateSummary(){
   setText('pc-due', fmtUSD(due));
 
   // Also update the BOQ grand total
-  setText('ex-grand', worksTotal>0?fmtUSD(worksTotal):'$0');
-  var prevW=ctx.prevWorks;
-  setText('ex-prevworks', prevW>0?fmtUSD(prevW):'$0');
-  setText('ex-currworks', (worksTotal-prevW)>0?fmtUSD(worksTotal-prevW):'$0');
+  /* تذييل جدول BOQ يعكس دائمًا الحالة الحية، لا اللقطة المعروضة */
+  var liveWorks=calcWorksTotal();
+  var livePrev=exData.reduce(function(a,d){return a+prevWorksOf(d);},0);
+  setText('ex-grand', liveWorks>0?fmtUSD(liveWorks):'$0');
+  setText('ex-prevworks', livePrev>0?fmtUSD(livePrev):'$0');
+  setText('ex-currworks', (liveWorks-livePrev)>0?fmtUSD(liveWorks-livePrev):'$0');
 }
 
 function printBOQDetail(){
@@ -2217,10 +2228,22 @@ function issueCertificate(){
   var grand=rows.reduce(function(s,r){return s+r.works_usd;},0);
   var prevW=exData.reduce(function(s,d){return s+prevWorksOf(d);},0);
   var curW=grand-prevW;
+  var oldRec=isReissue?issuedCerts[existingIdx]:null;
+  var warnDelta="";
+  if(oldRec){
+    var oldG=+oldRec.grand_usd||0, diff=grand-oldG;
+    if(Math.abs(diff)>0.005){
+      warnDelta="\n\u26a0 \u062a\u063a\u064a\u0631\u062a \u0642\u064a\u0645\u0629 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635:\n"+
+        "   \u0627\u0644\u0642\u062f\u064a\u0645\u0629: "+fmtUSD(oldG)+"\n"+
+        "   \u0627\u0644\u062c\u062f\u064a\u062f\u0629: "+fmtUSD(grand)+"\n"+
+        "   \u0627\u0644\u0641\u0631\u0642: "+(diff>0?"+":"-")+fmtUSD(Math.abs(diff))+"\n";
+    }
+  }
   var msg="\u0625\u0635\u062f\u0627\u0631 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+no+(isReissue?" (\u0625\u0639\u0627\u062f\u0629 \u0625\u0635\u062f\u0627\u0631)":"")+"\n"+
           "\u0639\u062f\u062f \u0627\u0644\u0628\u0646\u0648\u062f: "+rows.length+"\n"+
           "\u0625\u062c\u0645\u0627\u0644\u064a \u062a\u0631\u0627\u0643\u0645\u064a: "+fmtUSD(grand)+"\n"+
           "\u0642\u064a\u0645\u0629 \u0647\u0630\u0627 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635: "+fmtUSD(curW)+"\n\n"+
+          warnDelta+
           "\u0628\u0639\u062f \u0627\u0644\u0625\u0635\u062f\u0627\u0631 \u0644\u0646 \u064a\u0645\u0643\u0646 \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u0625\u0644\u0627 \u0628\u0635\u0644\u0627\u062d\u064a\u0629 \u0627\u0644\u0623\u062f\u0645\u0646. \u0645\u062a\u0627\u0628\u0639\u0629\u061f";
   if(!confirm(msg))return;
   var d=new Date();
@@ -2238,7 +2261,12 @@ function issueCertificate(){
     cvars:cvSnap,
     rows:rows
   };
-  if(isReissue){ rec.reissued_at=d.toISOString(); issuedCerts[existingIdx]=rec; }
+  if(isReissue){
+    rec.reissued_at=d.toISOString();
+    var bk=Object.assign({},oldRec); delete bk.backup;
+    rec.backup=bk;   /* \u0646\u0633\u062e\u0629 \u0627\u0644\u0625\u0635\u062f\u0627\u0631 \u0627\u0644\u0633\u0627\u0628\u0642 */
+    issuedCerts[existingIdx]=rec;
+  }
   else { issuedCerts.push(rec); issuedCerts.sort(function(a,b){return a.no-b.no;}); }
   certDraft=no;
   viewCert=0;
@@ -2375,7 +2403,8 @@ function renderCertLog(){
         (isLast&&!exLocked?'\u0645\u0641\u062a\u0648\u062d \u0644\u0644\u062a\u0639\u062f\u064a\u0644':'\u0645\u064f\u0635\u062f\u0631 \u0648\u0645\u0642\u0641\u0644')+'</span></td>'+
       '<td style="text-align:center">'+
         '<button class="btn btn-primary" style="padding:3px 8px;font-size:11px" onclick="openCertSummary('+c.no+')">\ud83d\udc41 \u0639\u0631\u0636/\u0637\u0628\u0627\u0639\u0629</button> '+
-        '<button class="btn" style="padding:3px 8px;font-size:11px" onclick="exportCertCSV('+c.no+')">\u2b07 CSV</button>'+
+        '<button class="btn" style="padding:3px 8px;font-size:11px" onclick="exportCertCSV('+c.no+')">\u2b07 CSV</button> '+
+        (c.backup?'<button class="btn" style="padding:3px 8px;font-size:11px;background:#7D5A00;color:#fff;border-color:#7D5A00" onclick="restoreCertBackup('+c.no+')">\u21ba \u0627\u0633\u062a\u0631\u062c\u0627\u0639</button>':'')+
       '</td></tr>';
   }).join("");
 }
@@ -2539,6 +2568,18 @@ function openCertSummary(no){
   applyCertDate();
 }
 
+/* \u0627\u0633\u062a\u0631\u062c\u0627\u0639 \u0646\u0633\u062e\u0629 \u0627\u0644\u0625\u0635\u062f\u0627\u0631 \u0627\u0644\u0633\u0627\u0628\u0642 */
+function restoreCertBackup(no){
+  var c=findCert(no);
+  if(!c||!c.backup){alert("\u0644\u0627 \u062a\u0648\u062c\u062f \u0646\u0633\u062e\u0629 \u0633\u0627\u0628\u0642\u0629 \u0644\u0647\u0630\u0627 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635.");return;}
+  if(!requireAdmin("\u0627\u0633\u062a\u0631\u062c\u0627\u0639 \u0646\u0633\u062e\u0629 \u0633\u0627\u0628\u0642\u0629 \u064a\u062d\u062a\u0627\u062c \u0635\u0644\u0627\u062d\u064a\u0629 \u0627\u0644\u0623\u062f\u0645\u0646.")) return;
+  if(!confirm("\u0627\u0633\u062a\u0631\u062c\u0627\u0639 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 #"+no+" \u0625\u0644\u0649 "+fmtUSD(+c.backup.grand_usd||0)+" \u0628\u062f\u0644\u0627\u064b \u0645\u0646 "+fmtUSD(+c.grand_usd||0)+"\u061f")) return;
+  var idx=issuedCerts.indexOf(c);
+  issuedCerts[idx]=c.backup;
+  saveIssued();renderCertLog();updateSummary();
+  alert("\u2714 \u062a\u0645 \u0627\u0644\u0627\u0633\u062a\u0631\u062c\u0627\u0639.");
+}
+
 function exportCertCSV(no){
   var c=null;
   for(var i=0;i<issuedCerts.length;i++){if(issuedCerts[i].no===no){c=issuedCerts[i];break;}}
@@ -2596,7 +2637,7 @@ function renderCertPicker(){
   sel.style.display="";
   var opts='<option value="">✎ تعديل مستخلص…</option>';
   issuedCerts.slice().sort(function(a,b){return a.no-b.no;}).forEach(function(c){
-    opts+='<option value="'+c.no+'"'+(c.no===certDraft?' selected':'')+'>مستخلص #'+c.no+' — '+(c.date||'')+(c.no===certDraft?' (مفتوح الآن)':'')+'</option>';
+    opts+='<option value="'+c.no+'"'+(c.no===certDraft?' selected':'')+'>مستخلص #'+c.no+' — '+(c.date||'')+((c.no===certDraft&&!exLocked)?' (مفتوح للتعديل)':(c.no===certDraft?' (مُصدر ومقفل)':''))+'</option>';
   });
   if(certDraft>issuedCerts.length){
     opts+='<option value="'+certDraft+'" selected>المستخلص الجاري #'+certDraft+' (تحت الإعداد)</option>';
