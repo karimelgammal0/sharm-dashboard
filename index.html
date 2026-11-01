@@ -299,6 +299,10 @@ tr.over-row td.desc-c{color:#7D1C1C}
       style="padding:8px 18px;font-size:12.5px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted);margin-bottom:-2px">
       &#x1F4B0; &#x627;&#x644;&#x62F;&#x641;&#x639;&#x627;&#x62A; &#x627;&#x644;&#x645;&#x62D;&#x635;&#x644;&#x629;
     </button>
+    <button class="ex-stab" onclick="switchExTab('ledger')" id="exstab-ledger"
+      style="padding:8px 18px;font-size:12.5px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted);margin-bottom:-2px">
+      &#x1F4CA; &#x62A;&#x62D;&#x644;&#x64A;&#x644; &#x627;&#x644;&#x628;&#x646;&#x648;&#x62F;
+    </button>
     <button class="ex-stab" onclick="switchExTab('log')" id="exstab-log"
       style="padding:8px 18px;font-size:12.5px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted);margin-bottom:-2px">
       &#x1F4DA; &#x633;&#x62C;&#x644; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;&#x627;&#x62A;
@@ -671,6 +675,29 @@ tr.over-row td.desc-c{color:#7D1C1C}
       </table>
     </div>
   </div><!-- /expane-log -->
+
+  <!-- ── SUB-PANE: COMPONENT ANALYSIS / LEDGER ── -->
+  <div id="expane-ledger" style="display:none;max-width:1180px;margin:0 auto" dir="rtl">
+    <div class="info-box" style="margin-bottom:12px">
+      &#x62A;&#x62D;&#x644;&#x64A;&#x644; &#x628;&#x646;&#x648;&#x62F; &#x627;&#x644;&#x625;&#x636;&#x627;&#x641;&#x629; &#x648;&#x627;&#x644;&#x62E;&#x635;&#x645; &#x639;&#x628;&#x631; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;&#x627;&#x62A; &#x2014; &#x627;&#x636;&#x63A;&#x637; &#x639;&#x644;&#x649; &#x623;&#x64A; &#x628;&#x646;&#x62F; &#x623;&#x648; &#x623;&#x64A; &#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x644;&#x639;&#x631;&#x636; &#x643;&#x634;&#x641; &#x62D;&#x633;&#x627;&#x628;&#x647;.
+    </div>
+
+    <div class="filters" style="margin-bottom:12px">
+      <label style="font-size:11px;color:var(--muted);font-weight:700">&#x627;&#x644;&#x628;&#x646;&#x62F;:</label>
+      <select id="lg-comp" onchange="setLedger('comp',this.value)" style="font-size:12px;padding:6px 9px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-weight:600;background:#fff;cursor:pointer"></select>
+      <label style="font-size:11px;color:var(--muted);font-weight:700">&#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;:</label>
+      <select id="lg-cert" onchange="setLedger('cert',this.value)" style="font-size:12px;padding:6px 9px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-weight:600;background:#fff;cursor:pointer"></select>
+      <button class="btn" onclick="exportLedgerCSV()" style="margin-right:auto">&#x2B07; &#x62A;&#x635;&#x62F;&#x64A;&#x631; CSV</button>
+    </div>
+
+    <!-- matrix: components x certificates -->
+    <div style="font-size:12px;font-weight:700;color:var(--navy);margin:6px 2px 8px">&#x645;&#x635;&#x641;&#x648;&#x641;&#x629; &#x627;&#x644;&#x628;&#x646;&#x648;&#x62F; &#x62D;&#x633;&#x628; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; (&#x62D;&#x631;&#x643;&#x629; &#x643;&#x644; &#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;)</div>
+    <div class="tbl-wrap"><table id="lg-matrix"></table></div>
+
+    <!-- ledger statement -->
+    <div id="lg-title" style="font-size:12px;font-weight:700;color:var(--navy);margin:18px 2px 8px"></div>
+    <div class="tbl-wrap"><table id="lg-ledger"></table></div>
+  </div><!-- /expane-ledger -->
 
 </div><!-- /pane-extract -->
 
@@ -1454,6 +1481,7 @@ function switchExTab(id){
   g('expane-summary').style.display = id==='summary' ? '' : 'none';
   var lg=g('expane-log'); if(lg) lg.style.display = id==='log' ? '' : 'none';
   var pp=g('expane-pay'); if(pp) pp.style.display = id==='pay' ? '' : 'none';
+  var lgp=g('expane-ledger'); if(lgp) lgp.style.display = id==='ledger' ? '' : 'none';
   document.querySelectorAll('.ex-stab').forEach(function(b){
     var active = b.id === 'exstab-'+id;
     b.style.color       = active ? 'var(--navy)' : 'var(--muted)';
@@ -1463,6 +1491,7 @@ function switchExTab(id){
   if(id==='summary') updateSummary();
   if(id==='log') renderCertLog();
   if(id==='pay') renderPayments();
+  if(id==='ledger') renderLedger();
 }
 
 function calcWorksTotal(){
@@ -2415,6 +2444,152 @@ function importInvoiceCerts(){
   saveStorage(); pushAllToDB(); saveIssued();
   syncCertNo(); applyCertDate(); renderExtract(); renderCertLog(); updateSummary(); applyExLock();
   alert("\u2714 \u062a\u0645 \u0627\u0633\u062a\u064a\u0631\u0627\u062f 4 \u0645\u0633\u062a\u062e\u0644\u0635\u0627\u062a. \u0627\u0644\u062d\u0627\u0644\u064a #4 \u0645\u064f\u0635\u062f\u0631 \u0648\u0645\u0642\u0641\u0644.");
+}
+
+
+/* =======================================================================
+   تحليل بنود الإضافة والخصم + كشف حساب
+   ======================================================================= */
+var LG_COMPS=[
+  {k:'works',lbl:'\u0627\u0644\u0623\u0639\u0645\u0627\u0644 \u0627\u0644\u0645\u0646\u0641\u0630\u0629',sign:1},
+  {k:'vat',  lbl:'\u0636\u0631\u064a\u0628\u0629 \u0627\u0644\u0642\u064a\u0645\u0629 \u0627\u0644\u0645\u0636\u0627\u0641\u0629',sign:1},
+  {k:'si',   lbl:'\u0627\u0644\u062a\u0623\u0645\u064a\u0646\u0627\u062a \u0627\u0644\u0627\u062c\u062a\u0645\u0627\u0639\u064a\u0629',sign:1},
+  {k:'adv',  lbl:'\u062e\u0635\u0645 \u0627\u0644\u062f\u0641\u0639\u0629 \u0627\u0644\u0645\u0642\u062f\u0645\u0629',sign:-1},
+  {k:'ret',  lbl:'\u0627\u0644\u0645\u062d\u062a\u062c\u0632 (\u0636\u0645\u0627\u0646 \u0627\u0644\u0623\u0639\u0645\u0627\u0644)',sign:-1},
+  {k:'prev', lbl:'\u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0633\u0627\u0628\u0642\u0629 \u0627\u0644\u0645\u062d\u0635\u0644\u0629',sign:-1},
+  {k:'net',  lbl:'\u0635\u0627\u0641\u064a \u0627\u0644\u0645\u0633\u062a\u062d\u0642',sign:0}
+];
+var lgComp='', lgCert=0;
+
+/* القيم التراكمية لمستخلص واحد */
+function certFin(c){
+  var cv=cvFromSnap(c.cvars);
+  if(payAuto) cv.prev=paymentsBefore(c.date||'');
+  var gw=+c.grand_usd||0;
+  var vat=gw*(cv.vat/100), si=gw*(cv.si/100);
+  var adv=cv.contract>0 ? cv.advance*(gw/cv.contract) : cv.advance;
+  var ret=gw*(cv.ret/100);
+  var net=gw+vat+si-adv-ret-cv.prev;
+  return {works:gw,vat:vat,si:si,adv:adv,ret:ret,prev:cv.prev,net:net};
+}
+/* الحركة = تراكمي هذا المستخلص − السابق */
+function ledgerRows(){
+  var list=issuedCerts.slice().sort(function(a,b){return a.no-b.no;});
+  var out=[],prevF=null;
+  list.forEach(function(c){
+    var f=certFin(c), mv={};
+    LG_COMPS.forEach(function(x){
+      mv[x.k]= prevF ? (f[x.k]-prevF[x.k]) : f[x.k];
+    });
+    out.push({no:c.no,date:c.date||'',by:c.by||'-',cum:f,mv:mv,rows:(c.rows||[]).length});
+    prevF=f;
+  });
+  return out;
+}
+function setLedger(what,v){
+  if(what==='comp'){ lgComp=v||''; if(lgComp) lgCert=0; }
+  else { lgCert=parseInt(v,10)||0; if(lgCert) lgComp=''; }
+  renderLedger();
+}
+function lgLabel(k){
+  for(var i=0;i<LG_COMPS.length;i++) if(LG_COMPS[i].k===k) return LG_COMPS[i].lbl;
+  return k;
+}
+function sgn(k){
+  for(var i=0;i<LG_COMPS.length;i++) if(LG_COMPS[i].k===k) return LG_COMPS[i].sign;
+  return 0;
+}
+function lgMoney(v,sign){
+  var col = sign>0 ? '#14573C' : (sign<0 ? '#7D1C1C' : 'var(--navy)');
+  var pre = sign>0 ? '+' : (sign<0 ? '\u2212' : '');
+  return '<span style="color:'+col+';font-weight:600">'+pre+fmtUSD(Math.abs(v))+'</span>';
+}
+
+function renderLedger(){
+  var data=ledgerRows();
+  /* selects */
+  var sc=g('lg-comp');
+  if(sc){
+    sc.innerHTML='<option value="">\u0643\u0644 \u0627\u0644\u0628\u0646\u0648\u062f</option>'+
+      LG_COMPS.map(function(x){return '<option value="'+x.k+'"'+(x.k===lgComp?' selected':'')+'>'+x.lbl+'</option>';}).join('');
+  }
+  var sr=g('lg-cert');
+  if(sr){
+    sr.innerHTML='<option value="0">\u0643\u0644 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635\u0627\u062a</option>'+
+      data.map(function(d){return '<option value="'+d.no+'"'+(d.no===lgCert?' selected':'')+'>\u0645\u0633\u062a\u062e\u0644\u0635 #'+d.no+' \u2014 '+d.date+'</option>';}).join('');
+  }
+
+  /* ---- matrix ---- */
+  var mt=g('lg-matrix');
+  if(mt){
+    if(!data.length){
+      mt.innerHTML='<tbody><tr><td style="padding:14px;text-align:center;color:#aaa;font-style:italic">\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0633\u062a\u062e\u0644\u0635\u0627\u062a \u0645\u064f\u0635\u062f\u0631\u0629</td></tr></tbody>';
+    }else{
+      var h='<thead><tr><th style="text-align:center;min-width:170px">\u0627\u0644\u0628\u0646\u062f</th>';
+      data.forEach(function(d){ h+='<th style="text-align:center;cursor:pointer" onclick="setLedger(\'cert\','+d.no+')">#'+d.no+'<div style="font-size:9px;font-weight:400;opacity:.7">'+d.date+'</div></th>'; });
+      h+='<th style="text-align:center;background:#1F3864;color:#fff">\u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a</th></tr></thead>';
+      var last=data[data.length-1];
+      var b='<tbody>'+LG_COMPS.map(function(x){
+        var tr='<tr class="r-item'+(x.k===lgComp?' upd-row':'')+'" style="cursor:pointer" onclick="setLedger(\'comp\',\''+x.k+'\')">';
+        tr+='<td style="text-align:center;font-weight:600'+(x.k==='net'?';background:#EAF5EF':'')+'">'+x.lbl+'</td>';
+        data.forEach(function(d){ tr+='<td class="num">'+lgMoney(d.mv[x.k],x.sign)+'</td>'; });
+        tr+='<td class="num" style="background:#F3F6FB;font-weight:700">'+lgMoney(last.cum[x.k],x.sign)+'</td>';
+        return tr+'</tr>';
+      }).join('')+'</tbody>';
+      mt.innerHTML=h+b;
+    }
+  }
+
+  /* ---- ledger statement ---- */
+  var tt=g('lg-title'), lt=g('lg-ledger');
+  if(!lt) return;
+  if(!data.length){ if(tt)tt.textContent=''; lt.innerHTML=''; return; }
+
+  if(lgComp){
+    /* كشف حساب بند عبر كل المستخلصات */
+    var sg=sgn(lgComp);
+    if(tt)tt.innerHTML='\u0643\u0634\u0641 \u062d\u0633\u0627\u0628 \u0627\u0644\u0628\u0646\u062f: <span style="color:var(--gold)">'+lgLabel(lgComp)+'</span>';
+    var hh='<thead><tr><th style="text-align:center;min-width:95px">\u0627\u0644\u062a\u0627\u0631\u064a\u062e</th><th style="text-align:center">\u0627\u0644\u0628\u064a\u0627\u0646</th><th class="num">\u0627\u0644\u062d\u0631\u0643\u0629</th><th class="num">\u0627\u0644\u0631\u0635\u064a\u062f \u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a</th></tr></thead>';
+    var bb='<tbody>'+data.map(function(d){
+      return '<tr class="r-item"><td style="text-align:center;font-size:11.5px">'+esc(d.date)+'</td>'+
+        '<td style="text-align:center;font-size:11.5px">\u0645\u0633\u062a\u062e\u0644\u0635 #'+d.no+' \u2014 '+esc(d.by)+' ('+d.rows+' \u0628\u0646\u062f)</td>'+
+        '<td class="num">'+lgMoney(d.mv[lgComp],sg)+'</td>'+
+        '<td class="num" style="color:var(--navy);font-weight:700">'+fmtUSD(Math.abs(d.cum[lgComp]))+'</td></tr>';
+    }).join('')+'</tbody>';
+    var fin=data[data.length-1].cum[lgComp];
+    bb+='<tfoot><tr class="total-row"><td colspan="3" style="padding:9px 10px;text-align:center">\u0627\u0644\u0631\u0635\u064a\u062f \u0627\u0644\u0646\u0647\u0627\u0626\u064a</td><td class="num td-w" style="font-size:14px">'+fmtUSD(Math.abs(fin))+'</td></tr></tfoot>';
+    lt.innerHTML=hh+bb;
+  }else if(lgCert){
+    /* كشف حساب مستخلص واحد */
+    var d=null; data.forEach(function(x){ if(x.no===lgCert) d=x; });
+    if(!d){ lt.innerHTML=''; return; }
+    if(tt)tt.innerHTML='\u0643\u0634\u0641 \u062d\u0633\u0627\u0628 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635: <span style="color:var(--gold)">#'+d.no+'</span> \u2014 '+d.date;
+    var h2='<thead><tr><th style="text-align:center;min-width:170px">\u0627\u0644\u0628\u0646\u062f</th><th class="num">\u062d\u0631\u0643\u0629 \u0647\u0630\u0627 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635</th><th class="num">\u0627\u0644\u062a\u0631\u0627\u0643\u0645\u064a \u062d\u062a\u0649 \u062a\u0627\u0631\u064a\u062e\u0647</th></tr></thead>';
+    var b2='<tbody>'+LG_COMPS.map(function(x){
+      return '<tr class="r-item'+(x.k==='net'?'" style="background:#EAF5EF':'')+'">'+
+        '<td style="text-align:center;font-weight:600">'+x.lbl+'</td>'+
+        '<td class="num">'+lgMoney(d.mv[x.k],x.sign)+'</td>'+
+        '<td class="num" style="color:var(--navy)">'+fmtUSD(Math.abs(d.cum[x.k]))+'</td></tr>';
+    }).join('')+'</tbody>';
+    lt.innerHTML=h2+b2;
+  }else{
+    if(tt)tt.innerHTML='\u0627\u062e\u062a\u0631 \u0628\u0646\u062f\u064b\u0627 \u0623\u0648 \u0645\u0633\u062a\u062e\u0644\u0635\u064b\u0627 \u0645\u0646 \u0627\u0644\u0642\u0648\u0627\u0626\u0645 \u0623\u0639\u0644\u0627\u0647 \u0623\u0648 \u0627\u0636\u063a\u0637 \u0639\u0644\u0649 \u0635\u0641 \u0641\u064a \u0627\u0644\u0645\u0635\u0641\u0648\u0641\u0629.';
+    lt.innerHTML='';
+  }
+}
+
+function exportLedgerCSV(){
+  var data=ledgerRows();
+  if(!data.length){alert('\u0644\u0627 \u062a\u0648\u062c\u062f \u0628\u064a\u0627\u0646\u0627\u062a.');return;}
+  var out=['\uFEFFCert,Date,Component,Movement,Cumulative'];
+  data.forEach(function(d){
+    LG_COMPS.forEach(function(x){
+      out.push([d.no,d.date,'"'+x.lbl+'"',d.mv[x.k].toFixed(2),d.cum[x.k].toFixed(2)].join(','));
+    });
+  });
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([out.join('\n')],{type:'text/csv;charset=utf-8'}));
+  a.download='Certificate_Components_Ledger.csv'; a.click();
 }
 
 function newCertificate(){
