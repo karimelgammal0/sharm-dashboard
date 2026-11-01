@@ -612,8 +612,6 @@ tr.over-row td.desc-c{color:#7D1C1C}
             <th class="num">&#x627;&#x644;&#x645;&#x639;&#x627;&#x62F;&#x644; ($)</th>
             <th class="num">&#x627;&#x644;&#x62A;&#x631;&#x627;&#x643;&#x645;&#x64A; ($)</th>
             <th style="text-align:center">&#x627;&#x644;&#x628;&#x64A;&#x627;&#x646;</th>
-            <th style="text-align:center">&#x627;&#x644;&#x62D;&#x627;&#x644;&#x629;</th>
-            <th style="text-align:center">&#x645;&#x642;&#x627;&#x628;&#x644;</th>
             <th style="text-align:center">&#x62D;&#x630;&#x641;</th>
           </tr>
         </thead>
@@ -622,7 +620,7 @@ tr.over-row td.desc-c{color:#7D1C1C}
           <tr class="total-row">
             <td colspan="6" style="padding:9px 10px">&#x625;&#x62C;&#x645;&#x627;&#x644;&#x64A; &#x627;&#x644;&#x645;&#x62D;&#x635;&#x644;</td>
             <td class="num td-w" id="pay-grand" style="font-size:14px">$0</td>
-            <td colspan="5"></td>
+            <td colspan="3"></td>
           </tr>
         </tfoot>
       </table>
@@ -632,11 +630,9 @@ tr.over-row td.desc-c{color:#7D1C1C}
   <!-- ── SUB-PANE: CERTIFICATES LOG ── -->
   <div id="expane-log" style="display:none" dir="rtl">
     <div class="info-box" style="margin-bottom:12px">
-      &#x633;&#x62C;&#x644; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635;&#x627;&#x62A; &#x627;&#x644;&#x645;&#x64F;&#x635;&#x62F;&#x631;&#x629; &#x2014; &#x627;&#x644;&#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x627;&#x644;&#x645;&#x64F;&#x635;&#x62F;&#x631; &#x645;&#x642;&#x641;&#x644; &#x648;&#x644;&#x627; &#x64A;&#x64F;&#x639;&#x62F;&#x644; &#x625;&#x644;&#x627; &#x628;&#x635;&#x644;&#x627;&#x62D;&#x64A;&#x629; &#x627;&#x644;&#x623;&#x62F;&#x645;&#x646;.
+      &#x633;&#x62C;&#x644; &#x644;&#x644;&#x627;&#x637;&#x644;&#x627;&#x639; &#x648;&#x627;&#x644;&#x637;&#x628;&#x627;&#x639;&#x629; &#x641;&#x642;&#x637; &#x2014; &#x623;&#x64A; &#x62A;&#x639;&#x62F;&#x64A;&#x644; &#x64A;&#x62A;&#x645; &#x645;&#x646; &#x62A;&#x628;&#x648;&#x64A;&#x628; BOQ Detail.
     </div>
     <div class="filters" style="margin-bottom:12px">
-      <button class="btn" onclick="rebuildHistoricalCert()" style="background:#185EA5;color:#fff;border-color:#185EA5">&#x2795; &#x62A;&#x633;&#x62C;&#x64A;&#x644; &#x645;&#x633;&#x62A;&#x62E;&#x644;&#x635; &#x633;&#x627;&#x628;&#x642;</button>
-      <button class="btn" onclick="recalcChain()" style="background:#1E6F50;color:#fff;border-color:#1E6F50">&#x21BB; &#x625;&#x639;&#x627;&#x62F;&#x629; &#x627;&#x62D;&#x62A;&#x633;&#x627;&#x628; &#x627;&#x644;&#x633;&#x644;&#x633;&#x644;&#x629;</button>
       <span style="font-size:11px;color:var(--muted)" id="cert-log-diag"></span>
     </div>
     <div class="tbl-wrap">
@@ -1307,7 +1303,7 @@ function renderPayments(){
   }
 
   if(!payments.length){
-    b.innerHTML='<tr><td colspan="12" style="padding:14px;text-align:center;color:#aaa;font-style:italic">\u0644\u0627 \u062a\u0648\u062c\u062f \u062f\u0641\u0639\u0627\u062a \u0645\u0633\u062c\u0644\u0629 \u0628\u0639\u062f</td></tr>';
+    b.innerHTML='<tr><td colspan="10" style="padding:14px;text-align:center;color:#aaa;font-style:italic">\u0644\u0627 \u062a\u0648\u062c\u062f \u062f\u0641\u0639\u0627\u062a \u0645\u0633\u062c\u0644\u0629 \u0628\u0639\u062f</td></tr>';
     setText("pay-grand","$0");
     return;
   }
@@ -1316,7 +1312,6 @@ function renderPayments(){
     var u=payUSD(p);
     run+=u;
     var isBefore=p.date && p.date<cd;
-    var cOf=certOfPayment(p);
     return '<tr class="r-item '+(isBefore?"pay-before":"pay-after")+'">'+
       '<td style="text-align:center;font-size:11.5px">'+esc(p.date)+'</td>'+
       '<td style="text-align:center;font-family:monospace;font-size:11.5px">'+(esc(p.ref)||"\u2014")+'</td>'+
@@ -1327,10 +1322,6 @@ function renderPayments(){
       '<td class="num td-w">'+fmtUSD(u)+'</td>'+
       '<td class="num" style="font-size:11.5px;color:var(--navy)">'+fmtUSD(run)+'</td>'+
       '<td style="text-align:center;font-size:11px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(p.note)+'">'+(esc(p.note)||"\u2014")+'</td>'+
-      '<td style="text-align:center"><span style="background:'+(isBefore?"#EAF5EF":"#FDF6E3")+';color:'+(isBefore?"#14573C":"#7D5A00")+';padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600" title="'+
-        (isBefore?"\u062a\u064f\u062e\u0635\u0645 \u0645\u0646 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0631\u0642\u0645 "+certDraft:"\u062a\u064f\u062e\u0635\u0645 \u0645\u0646 \u0627\u0644\u0645\u0633\u062a\u062e\u0644\u0635 \u0627\u0644\u062a\u0627\u0644\u064a")+'">'+
-        (isBefore?"\u0633\u0627\u0628\u0642\u0629 \u2192 #"+certDraft:"\u0644\u0627\u062d\u0642\u0629 \u2192 #"+(certDraft+1))+'</span></td>'+
-      '<td style="text-align:center;font-size:11px;color:var(--muted)">'+(cOf?("\u0645\u0642\u0627\u0628\u0644 #"+cOf.no):"\u0642\u0628\u0644 \u0623\u0648\u0644 \u0645\u0633\u062a\u062e\u0644\u0635")+'</td>'+
       '<td style="text-align:center"><button class="btn" style="padding:2px 7px;font-size:11px;background:#7D1C1C;color:#fff;border-color:#7D1C1C" onclick="deletePayment(\''+p.id+'\')">\ud83d\uddd1</button></td>'+
       '</tr>';
   }).join("");
@@ -2382,10 +2373,7 @@ function renderCertLog(){
         (isLast&&!exLocked?'\u0645\u0641\u062a\u0648\u062d \u0644\u0644\u062a\u0639\u062f\u064a\u0644':'\u0645\u064f\u0635\u062f\u0631 \u0648\u0645\u0642\u0641\u0644')+'</span></td>'+
       '<td style="text-align:center">'+
         '<button class="btn btn-primary" style="padding:3px 8px;font-size:11px" onclick="openCertSummary('+c.no+')">\ud83d\udc41 \u0639\u0631\u0636/\u0637\u0628\u0627\u0639\u0629</button> '+
-        '<button class="btn" style="padding:3px 8px;font-size:11px" onclick="fixCertMeta('+c.no+')">\u270e \u062a\u0635\u062d\u064a\u062d</button> '+
-        '<button class="btn" style="padding:3px 8px;font-size:11px;background:#7D5A00;color:#fff;border-color:#7D5A00" onclick="reopenCert('+c.no+')">\ud83d\udd13 \u0625\u0639\u0627\u062f\u0629 \u0641\u062a\u062d</button> '+
-        '<button class="btn" style="padding:3px 8px;font-size:11px" onclick="exportCertCSV('+c.no+')">\u2b07 CSV</button> '+
-        (isLast?'<button class="btn" style="padding:3px 8px;font-size:11px;background:#7D1C1C;color:#fff;border-color:#7D1C1C" onclick="deleteLastCert()">\ud83d\uddd1 \u062d\u0630\u0641</button>':'')+
+        '<button class="btn" style="padding:3px 8px;font-size:11px" onclick="exportCertCSV('+c.no+')">\u2b07 CSV</button>'+
       '</td></tr>';
   }).join("");
 }
